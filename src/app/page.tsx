@@ -6,7 +6,7 @@ import React from "react";
 const page = async () => {
   return (
     <main className="bg-[#E7E7E3] flex flex-col">
-      <div className="flex flex-col w-full min-h-screen px-12">
+      <div className="flex flex-col w-full min-h-screen px-3 lg:px-12">
         <NewLaunched />
         <Catalog />
       </div>

@@ -1,0 +1,46 @@
+export const ITEMS_LIST = [
+    {
+      id: "72a6a382-518f-4287-aaf2-92a34df3339e",
+      imageSrc: "/books/lost-in-time.webp",
+      altText: "Item 1",
+      title: "Lost in Time",
+      discount: "$12.80",
+      price: "$16.00",
+    },
+    {
+      id: "18aca12e-a46d-4218-8568-e6ba2cd58414",
+      imageSrc: "/books/memoirs-of-a-wanderer.webp",
+      altText: "Item 2",
+      title: "Memoirs of a Wanderer",
+      price: "$7.99",
+    },
+    {
+      id: "7d69309a-5680-4c42-8ca7-c81013419ecc",
+      imageSrc: "/books/himalyan-escape.webp",
+      altText: "Item 3",
+      title: "The Himalyan Escape",
+      discount: "$12.80",
+      price: "$16.00",
+    },
+    {
+      id: "745c1f36-557d-4c26-a89c-dd971c35de99",
+      imageSrc: "/books/echoes-of-past.webp",
+      altText: "Item 4",
+      title: "Echoes of the Past",
+      price: "$13.99",
+    },
+    {
+      id: "b3466fca-27dc-4c27-a9f2-6b1461d0ad4b",
+      imageSrc: "/books/darkend-path.webp",
+      altText: "Item 4",
+      title: "The Darkened Path",
+      price: "$8.99",
+    },
+    {
+      id: "b91cbdec-d387-497a-b842-26cbe165631a",
+      imageSrc: "/books/whisper-of-wind.webp",
+      altText: "Item 4",
+      title: "Whispers in the Wind",
+      price: "$13.50",
+    },
+  ];

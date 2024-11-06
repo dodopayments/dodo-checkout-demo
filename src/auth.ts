@@ -5,6 +5,22 @@ import Google from "next-auth/providers/google"
  
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
+  pages: {
+    signIn: "/login",
+  },
   providers: [Google],
+  callbacks: {
+    authorized({ auth, request: { nextUrl } }) {
+      const isLoggedIn = !!auth?.user;
+      const isOnMyAccount = nextUrl.pathname.startsWith("/my-account");
+
+      if (isOnMyAccount) {
+        if (isLoggedIn) return true;
+        return false; 
+      }
+
+      return true; 
+    },
+  },
   
 })

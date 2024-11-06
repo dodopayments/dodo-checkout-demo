@@ -36,7 +36,7 @@ const GoogleIcon = () => (
 
 const LoginPage = () => {
   return (
-    <div className="flex-1 flex items-center justify-center gap-8 p-4 md:p-8">
+    <div className="flex-1 flex items-center h-[70vh] lg:h-full justify-center gap-8 p-4 md:p-8">
       <div className="hidden md:block w-1/2 max-w-2xl">
         <Image
           src="/books/stack/Yearly.webp"

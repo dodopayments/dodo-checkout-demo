@@ -5,6 +5,7 @@ import "./globals.css";
 import Banner from "@/components/design-system/Banner";
 import NavBar from "@/components/design-system/NavBar";
 import Footer from "@/components/design-system/Footer";
+import { SessionProvider } from "next-auth/react"
 
 const instrument_serif = Instrument_Serif({
   subsets: ["latin"],
@@ -29,6 +30,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
+    <SessionProvider>
     <html lang="en">
       <body
         className={`${instrument_serif.variable} ${satoshi.variable} bg-[#E7E7E3] font-body antialiased`}
@@ -41,5 +43,6 @@ export default function RootLayout({
         </main>
       </body>
     </html>
+    </SessionProvider>
   );
 }

@@ -87,7 +87,7 @@ const CustomerPaymentForm = ({
               payment_link: true,
               product_id: id,
               quantity: 1,
-              return_url: window.location.origin + "/payment-complete",
+              return_url: "https://app.dodopayments.tech/",
             }),
           }
         );
@@ -136,7 +136,7 @@ const CustomerPaymentForm = ({
                 product_id: id,
                 quantity: 1,
               })),
-              return_url: window.location.origin + "/payment-complete",
+              return_url: "https://app.dodopayments.tech/",
             }),
           }
         );

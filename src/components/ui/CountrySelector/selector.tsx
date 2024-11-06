@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import { COUNTRIES } from "./countries";
 import { SelectMenuOption } from "./types";
 import React, { MutableRefObject, useEffect, useRef, useState } from "react";

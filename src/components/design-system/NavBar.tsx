@@ -3,11 +3,13 @@ import Image from "next/image";
 import Link from "next/link";
 import React from "react";
 import { Cart } from "./Cart";
+import { auth } from "@/auth";
 
-const NavBar = () => {
+const NavBar = async () => {
+  const session = await auth();
   return (
-    <div className="px-10">
-      <nav className="bg-white w-full mt-10 rounded-[20px] p-6 flex items-center justify-between">
+    <div className="px-3 lg:px-10">
+      <nav className="bg-white w-full mt-5 lg:mt-10 rounded-[20px] p-3 lg:p-6 flex items-center justify-between">
         <Link href="/">
           <header className="flex items-center gap-2">
             <Image
@@ -23,8 +25,11 @@ const NavBar = () => {
         </Link>
 
         <div className="flex items-center gap-4">
-          <Link href="/my-account">
+          <Link href="/my-account" className="flex items-center gap-1">
             <User size={24} weight="fill" />
+            <span className="font-medium text-base">
+              {session?.user?.name && session?.user?.name.split(" ")[0]}
+            </span>
           </Link>
           <Cart />
         </div>

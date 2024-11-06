@@ -1,7 +1,12 @@
+'use client'
+import { useEffect } from "react";
 import Image from "next/image";
 import { Button } from "../ui/button";
+import useCartStore from "@/store/cart";
+import { ITEMS_LIST } from "@/constants/Items";
 
 interface ItemProps {
+  id: string;
   imageSrc: string;
   altText: string;
   title: string;
@@ -10,15 +15,27 @@ interface ItemProps {
 }
 
 const Item: React.FC<ItemProps> = ({
+  id,
   imageSrc,
   altText,
   title,
   price,
   discount,
 }) => {
+  const { cartItems, addToCart, initializeCart } = useCartStore();
+
+  useEffect(() => {
+    const storedItems = localStorage.getItem("cartItems");
+    if (storedItems) {
+      initializeCart(JSON.parse(storedItems));
+    }
+  }, [initializeCart]);
+
+  const isInCart = cartItems.includes(id);
+
   return (
     <div className="w-fit h-fit gap-1 flex flex-col">
-      <div className="relative w-[28vw] h-96">
+      <div className="relative w-[95vw] lg:w-[21vw] h-80">
         <Image
           src={imageSrc}
           alt={altText}
@@ -38,62 +55,29 @@ const Item: React.FC<ItemProps> = ({
       ) : (
         <div className="text-[#232321] pl-1 font-semibold">{price}</div>
       )}
-
-      <Button>Add to Cart</Button>
+      <Button
+        onClick={() => addToCart(id)}
+        disabled={isInCart}
+        className={`py-2 ${isInCart ? "bg-neutral-800" : ""}`}
+      >
+        {isInCart ? "Added to Cart" : "Add to Cart"}
+      </Button>
     </div>
   );
 };
-const ITEMS_LIST = [
-  {
-    imageSrc: "/books/lost-in-time.webp",
-    altText: "Item 1",
-    title: "Item 1 Title",
-    price: "$10.00",
-  },
-  {
-    imageSrc: "/books/memoirs-of-a-wanderer.webp",
-    altText: "Item 2",
-    title: "Item 2 Title",
-    price: "$20.00",
-  },
-  {
-    imageSrc: "/books/himalyan-escape.webp",
-    altText: "Item 3",
-    title: "Item 3 Title",
-    discount: "$20.00",
-    price: "$30.00",
-  },
-  {
-    imageSrc: "/books/echoes-of-past.webp",
-    altText: "Item 4",
-    title: "Item 4 Title",
-    price: "$40.00",
-  },
-  {
-    imageSrc: "/books/darkend-path.webp",
-    altText: "Item 4",
-    title: "Item 4 Title",
-    price: "$40.00",
-  },
-  {
-    imageSrc: "/books/whisper-of-wind.webp",
-    altText: "Item 4",
-    title: "Item 4 Title",
-    price: "$40.00",
-  },
-];
+
 const Catalog = () => {
   return (
-    <div className="flex flex-col mb-16">
-      <div className="text-center mb-4  text-[#232321] text-[70px] font-semibold uppercase">
-        Don’t miss out{" "}
-        <span className="text-[#870A0A] font-display text-[70px] capitalize">
+    <div className="flex flex-col items-center justify-center mb-16">
+      <div className="text-center mb-4 lg:mt-4 lg:mb-12 text-[#232321] text-3xl lg:text-[55px] font-semibold uppercase">
+        Don&apos;t miss out{" "}
+        <span className="text-[#870A0A] font-display  capitalize">
           New Launches
         </span>
       </div>
-      <div className="w-full flex gap-12 justify-between flex-wrap">
-        {ITEMS_LIST.map((item, index) => (
-          <Item key={index} {...item} />
+      <div className="w-fit flex gap-12 justify-start  flex-wrap">
+        {ITEMS_LIST.map((item) => (
+          <Item key={item.id} {...item} />
         ))}
       </div>
     </div>

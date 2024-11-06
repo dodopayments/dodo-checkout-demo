@@ -1,4 +1,9 @@
-import { CheckCircle, DownloadSimple } from "@phosphor-icons/react/dist/ssr";
+import { signOut } from "@/auth";
+import {
+  CheckCircle,
+  DownloadSimple,
+  SignOut,
+} from "@phosphor-icons/react/dist/ssr";
 
 import Image from "next/image";
 const SUBSCRIPTION_PLANS = [
@@ -85,19 +90,14 @@ const PurchaseCard = ({ title, date, imageSrc }: PurchaseCardProps) => {
   return (
     <div className="flex flex-col w-[250px]">
       <div className="relative aspect-[4/5] rounded-xl overflow-hidden mb-3">
-        <Image 
-          src={imageSrc} 
-          alt={title}
-          className="object-cover"
-          fill
-        />
+        <Image src={imageSrc} alt={title} className="object-cover" fill />
       </div>
       <div className="flex flex-col gap-1">
         <h3 className="text-[#232321] font-medium">{title}</h3>
         <div className="flex items-center justify-between">
           <span className="text-sm text-neutral-600">Purchased on {date}</span>
           <button className="p-2 bg-black rounded-lg hover:bg-neutral-900 transition-colors">
-          <DownloadSimple size={20} className="text-white" />
+            <DownloadSimple size={20} className="text-white" />
           </button>
         </div>
       </div>
@@ -110,18 +110,18 @@ const OneTimePurchase = () => {
     {
       title: "Lost in Time",
       date: "26 Oct 24",
-      imageSrc: "/books/lost-in-time.webp"
+      imageSrc: "/books/lost-in-time.webp",
     },
     {
       title: "Memoirs of a Wanderer",
       date: "10 Sep 24",
-      imageSrc: "/books/memoirs-of-a-wanderer.webp"
+      imageSrc: "/books/memoirs-of-a-wanderer.webp",
     },
     {
       title: "The Himalayan Escape",
       date: "10 Sep 24",
-      imageSrc: "/books/himalyan-escape.webp"
-    }
+      imageSrc: "/books/himalyan-escape.webp",
+    },
   ];
 
   return (
@@ -146,7 +146,24 @@ const page = () => {
   return (
     <div className="w-full h-full p-10 pb-0">
       <div className="bg-white rounded-[20px] flex flex-col p-10">
-        <h1 className="font-display text-4xl">My Account</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="font-display text-4xl">My Account</h1>
+          <form
+            action={async () => {
+              "use server";
+              await signOut();
+            }}
+          >
+            <button
+              type="submit"
+              className="text-red-500 flex items-center gap-1 hover:text-red-400"
+            >
+              Sign out
+              <SignOut />
+            </button>
+          </form>
+        </div>
+
         <Subscriptions />
         <OneTimePurchase />
       </div>

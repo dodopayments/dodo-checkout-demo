@@ -35,7 +35,7 @@ const Item: React.FC<ItemProps> = ({
 
   return (
     <div className="w-fit h-fit gap-1 flex flex-col">
-      <div className="relative w-[95vw] lg:w-[21vw] h-80">
+      <div className="relative w-[95vw] sm:w-[40vw] lg:w-[21vw] h-80">
         <Image
           src={imageSrc}
           alt={altText}
@@ -75,7 +75,7 @@ const Catalog = () => {
           New Launches
         </span>
       </div>
-      <div className="w-fit flex gap-12 justify-start  flex-wrap">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12">
         {ITEMS_LIST.map((item) => (
           <Item key={item.id} {...item} />
         ))}

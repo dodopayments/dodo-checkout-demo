@@ -93,7 +93,7 @@ const ProductPart = () => {
     }, 0);
 
     const tax = subtotal * 0.1;
-    const total = subtotal + tax;
+    const total = subtotal ;
 
     return { subtotal, tax, total };
   }, [cartItemsDetails]);

@@ -2,6 +2,7 @@
 
 import React from "react";
 import Image from "next/image";
+import { SUBSCRIPTION_PLANS } from "@/constants/Items";
 
 interface ProductCardProps {
   id: string;
@@ -110,47 +111,7 @@ const PriceSummaryItem: React.FC<PriceSummaryItemProps> = ({
   </div>
 );
 
-export const SUBSCRIPTION_PLANS = [
-  {
-    id: "e42062ba-1a95-466d-a189-aa0903eaac3d",
-    title: "Monthly plan",
-    price: 15.0,
-    image: {
-      src: "/books/stack/Monthly.webp",
-      width: "w-[35vw]",
-    },
-    features: [
-      "Get 2 books every month",
-      "Early access to new releases",
-      "Weekly newsletter",
-      "Monthly webinar invite",
-    ],
-    imagePosition: "right",
-    interval: "monthly",
-    intervalCount: 1,
-    trialDays: 0, 
-  },
-  {
-    id: "3b15417f-ea96-4104-a44f-c0dad1581d9d",
-    title: "Yearly plan",
-    price: 100.0,
-    image: {
-      src: "/books/stack/Yearly.webp",
-      width: "w-[45vw]",
-    },
-    features: [
-      "Get 20 books every Year",
-      "Early access to new releases",
-      "Weekly newsletter",
-      "Monthly webinar invite",
-      "Dinner with author",
-    ],
-    imagePosition: "left",
-    interval: "yearly",
-    intervalCount: 1,
-    trialDays: 0, // Added trial period
-  },
-];
+
 
 const ProductPartSub = ({ id }: { id: string }) => {
   const selectedPlan = SUBSCRIPTION_PLANS.find((item) => item.id === id);

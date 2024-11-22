@@ -1,42 +1,9 @@
+import { SUBSCRIPTION_PLANS } from "@/constants/Items";
 import { CheckCircle } from "@phosphor-icons/react/dist/ssr";
 import Image from "next/image";
 import Link from "next/link";
 
-export const SUBSCRIPTION_PLANS = [
-  {
-    id: "e42062ba-1a95-466d-a189-aa0903eaac3d",
-    title: "Monthly plan",
-    price: 15.0,
-    image: {
-      src: "/books/stack/Monthly.webp",
-      width: "lg:w-[35vw] w-[90vw]",
-    },
-    features: [
-      "Get 2 books every month",
-      "Early access to new releases",
-      "Weekly newsletter",
-      "Monthly webinar invite",
-    ],
-    imagePosition: "right",
-  },
-  {
-    id: "3b15417f-ea96-4104-a44f-c0dad1581d9d",
-    title: "Yearly plan",
-    price: 100.0,
-    image: {
-      src: "/books/stack/Yearly.webp",
-      width: "lg:w-[45vw]  w-[90vw]",
-    },
-    features: [
-      "Get 20 books every Year",
-      "Early access to new releases",
-      "Weekly newsletter",
-      "Monthly webinar invite",
-      "Dinner with author",
-    ],
-    imagePosition: "left",
-  },
-];
+
 
 const Feature = ({ text }: { text: string }) => (
   <div className="flex items-center gap-2">
@@ -81,8 +48,8 @@ const SubscriptionCard = ({
     <Image
       src={image.src}
       alt={`${title} Subscription`}
-      width={1920}
-      height={1080}
+      width={600}
+      height={600}
       className={`h-auto ${image.width}`}
     />
   );

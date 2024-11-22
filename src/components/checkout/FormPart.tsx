@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -16,6 +17,7 @@ import { CountrySelect } from "../ui/CountrySelect";
 
 import "react-international-phone/style.css";
 import useCartStore from "@/store/cart";
+import { API_KEY, PUBLIC_API, RETURN_URL } from "@/constants/apis";
 
 const formSchema = z.object({
   firstName: z.string().min(2, "First name must be at least 2 characters"),
@@ -39,6 +41,10 @@ const CustomerPaymentForm = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const cartItems = useCartStore((state) => state.cartItems);
+  const [phoneInputMeta, setPhoneInputMeta] = useState<{
+    country: any;
+    inputValue: string;
+  } | null>(null);
 
   const {
     control,
@@ -62,35 +68,31 @@ const CustomerPaymentForm = ({
   const createPaymentLink = async (formData: typeof formSchema._type) => {
     if (subscription) {
       try {
-        const response = await fetch(
-          "https://test.dev.dodopayments.com/subscriptions",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization:
-                "Bearer /TBByHMM+2QU/vl7.Y03k/59FeWzZx6iYIucQfGspv4sNxIml+J9Rs0kkTOHs0bUQ",
+        const response = await fetch(`${PUBLIC_API}/subscriptions`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${API_KEY}`,
+          },
+          body: JSON.stringify({
+            billing: {
+              city: formData.city,
+              country: formData.country,
+              state: formData.state,
+              street: formData.addressLine,
+              zipcode: parseInt(formData.zipCode),
             },
-            body: JSON.stringify({
-              billing: {
-                city: formData.city,
-                country: formData.country,
-                state: formData.state,
-                street: formData.addressLine,
-                zipcode: parseInt(formData.zipCode),
-              },
-              customer: {
-                email: formData.email,
-                name: `${formData.firstName} ${formData.lastName}`,
-                phone_number: formData.phoneNumber || undefined,
-              },
-              payment_link: true,
-              product_id: id,
-              quantity: 1,
-              return_url: "https://app.dodopayments.tech/",
-            }),
-          }
-        );
+            customer: {
+              email: formData.email,
+              name: `${formData.firstName} ${formData.lastName}`,
+              phone_number: formData.phoneNumber || undefined,
+            },
+            payment_link: true,
+            product_id: id,
+            quantity: 1,
+            return_url: RETURN_URL,
+          }),
+        });
 
         if (!response.ok) {
           throw new Error("Payment link creation failed");
@@ -109,37 +111,33 @@ const CustomerPaymentForm = ({
       }
     } else {
       try {
-        const response = await fetch(
-          "https://test.dev.dodopayments.com/payments",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization:
-                "Bearer /TBByHMM+2QU/vl7.Y03k/59FeWzZx6iYIucQfGspv4sNxIml+J9Rs0kkTOHs0bUQ",
+        const response = await fetch(`${PUBLIC_API}/payments`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${API_KEY}`,
+          },
+          body: JSON.stringify({
+            billing: {
+              city: formData.city,
+              country: formData.country,
+              state: formData.state,
+              street: formData.addressLine,
+              zipcode: parseInt(formData.zipCode),
             },
-            body: JSON.stringify({
-              billing: {
-                city: formData.city,
-                country: formData.country,
-                state: formData.state,
-                street: formData.addressLine,
-                zipcode: parseInt(formData.zipCode),
-              },
-              customer: {
-                email: formData.email,
-                name: `${formData.firstName} ${formData.lastName}`,
-                phone_number: formData.phoneNumber || undefined,
-              },
-              payment_link: true,
-              product_cart: cartItems.map((id) => ({
-                product_id: id,
-                quantity: 1,
-              })),
-              return_url: "https://app.dodopayments.tech/",
-            }),
-          }
-        );
+            customer: {
+              email: formData.email,
+              name: `${formData.firstName} ${formData.lastName}`,
+              phone_number: formData.phoneNumber || undefined,
+            },
+            payment_link: true,
+            product_cart: cartItems.map((id) => ({
+              product_id: id,
+              quantity: 1,
+            })),
+            return_url: RETURN_URL,
+          }),
+        });
 
         if (!response.ok) {
           throw new Error("Payment link creation failed");
@@ -162,7 +160,18 @@ const CustomerPaymentForm = ({
   const onSubmit = async (data: typeof formSchema._type) => {
     setIsLoading(true);
     setError("");
+    if (data.phoneNumber) {
+      const phoneValue = phoneInputMeta?.inputValue || "";
+      const hasOnlyCountryCode =
+        phoneValue.trim() === `+${phoneInputMeta?.country.dialCode}`;
 
+      if (hasOnlyCountryCode) {
+        delete data.phoneNumber;
+      } else if (phoneValue.length < phoneInputMeta?.country.format.length) {
+        console.error("Please enter a complete phone number");
+        return;
+      }
+    }
     if (cartItems.length === 0 && !subscription) {
       setError("Your cart is empty");
       setIsLoading(false);
@@ -342,7 +351,10 @@ const CustomerPaymentForm = ({
                   <FormControl>
                     <PhoneInput
                       value={field.value}
-                      onChange={(phone) => field.onChange(phone)}
+                      onChange={(phone, meta) => {
+                        field.onChange(phone);
+                        setPhoneInputMeta(meta);
+                      }}
                       defaultCountry="us"
                       countrySelectorStyleProps={{
                         buttonClassName:

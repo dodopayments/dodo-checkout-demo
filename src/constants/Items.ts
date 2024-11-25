@@ -1,6 +1,6 @@
 export const ITEMS_LIST = [
     {
-      id: "pdt_iSwFr5TWhK9MmXdvrpTHl",
+      id: "pdt_QWovnGwqARBqUQQbmlEI7",
       imageSrc: "/books/lost-in-time.webp",
       altText: "Item 1",
       title: "Lost in Time",
@@ -8,14 +8,14 @@ export const ITEMS_LIST = [
       price: "$16.00",
     },
     {
-      id: "pdt_l1YmkrdEHcU9ZT5B302as",
+      id: "pdt_JVrQujYp8ERLONIGtYkgT",
       imageSrc: "/books/memoirs-of-a-wanderer.webp",
       altText: "Item 2",
       title: "Memoirs of a Wanderer",
       price: "$7.99",
     },
     {
-      id: "pdt_DoLCsscuPM0BzcPtxynh9",
+      id: "pdt_YKmbI4CyHGmlyrg5XZl7g",
       imageSrc: "/books/himalyan-escape.webp",
       altText: "Item 3",
       title: "The Himalyan Escape",
@@ -23,21 +23,21 @@ export const ITEMS_LIST = [
       price: "$16.00",
     },
     {
-      id: "pdt_X6gfeufWfvGZIp2JXE5Qs",
+      id: "pdt_MApgjMlmLgXogiraKSeK3",
       imageSrc: "/books/echoes-of-past.webp",
       altText: "Item 4",
       title: "Echoes of the Past",
       price: "$13.99",
     },
     {
-      id: "pdt_0CA5DAf9umbBmXjIuE1NK",
+      id: "pdt_rkL69GfadxDLOiEk3LFNs",
       imageSrc: "/books/darkend-path.webp",
       altText: "Item 4",
       title: "The Darkened Path",
       price: "$8.99",
     },
     {
-      id: "pdt_8PBJHxzdtBKFO7FL7Ikbj",
+      id: "pdt_NIRgy5TTjBiFZxSSkRO8Q",
       imageSrc: "/books/whisper-of-wind.webp",
       altText: "Item 4",
       title: "Whispers in the Wind",
@@ -47,7 +47,7 @@ export const ITEMS_LIST = [
 
   export const SUBSCRIPTION_PLANS = [
     {
-      id: "pdt_ACeg1XEwVQfolABsCOT5g",
+      id: "pdt_a7rZcncnbD9sySxO4lj2Y",
       title: "Monthly plan",
       price: 15.0,
       image: {
@@ -66,7 +66,7 @@ export const ITEMS_LIST = [
     trialDays: 0, 
     },
     {
-      id: "pdt_m9BBIHiVJqcMd7y2EHkST",
+      id: "pdt_PKfYkaNVJ7m8QncvaaVip",
       title: "Yearly plan",
       price: 100.0,
       image: {

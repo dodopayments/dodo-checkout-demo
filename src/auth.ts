@@ -1,10 +1,12 @@
 import NextAuth from "next-auth"
-import { PrismaAdapter } from "@auth/prisma-adapter"
-import { prisma } from "./utils/prisma"
+import { SupabaseAdapter } from "@auth/supabase-adapter"
 import Google from "next-auth/providers/google"
  
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: PrismaAdapter(prisma),
+  adapter: SupabaseAdapter({
+    url: process.env.SUPABASE_URL!,
+    secret: process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  }),
   trustHost: true,
   secret: process.env.AUTH_SECRET,
   pages: {

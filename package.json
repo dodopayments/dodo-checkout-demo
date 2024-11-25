@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.7.3",
+    "@auth/supabase-adapter": "^1.7.4",
     "@hookform/resolvers": "^3.9.1",
     "@phosphor-icons/react": "^2.1.7",
     "@prisma/client": "^5.21.1",
@@ -21,6 +22,7 @@
     "@radix-ui/react-select": "^2.1.2",
     "@radix-ui/react-slot": "^1.1.0",
     "@reduxjs/toolkit": "^2.3.0",
+    "@supabase/supabase-js": "^2.46.1",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "cmdk": "^1.0.0",

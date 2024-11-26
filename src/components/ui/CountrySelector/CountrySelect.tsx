@@ -20,7 +20,7 @@ import {
 import { cn } from "@/lib/utils";
 
 import { FlagImage } from "react-international-phone";
-import { COUNTRIES } from "./CountrySelector/countries";
+import { fetchCountries } from "./getCountiresApi";
 
 interface CountrySelectProps {
   control: any;
@@ -52,7 +52,7 @@ export const CountrySelect: React.FC<CountrySelectProps> = ({
   useEffect(() => {
     const loadCountries = async () => {
       try {
-        const fetchedCountries = await COUNTRIES;
+        const fetchedCountries = await fetchCountries();
         setCountries(
           fetchedCountries.map((country: { title: string; value: string }) => ({
             name: country.title,

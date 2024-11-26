@@ -13,7 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { PhoneInput } from "react-international-phone";
-import { CountrySelect } from "../ui/CountrySelect";
+import { CountrySelect } from "../ui/CountrySelector/CountrySelect";
 
 import "react-international-phone/style.css";
 import useCartStore from "@/store/cart";

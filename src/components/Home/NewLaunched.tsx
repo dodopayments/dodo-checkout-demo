@@ -2,9 +2,11 @@
 import useCartStore from "@/store/cart";
 import Image from "next/image";
 import { Button } from "../ui/button";
+import { ITEMS_LIST } from "../../constants/Items";
 
 const NewLaunched = () => {
-  const id = "72a6a382-518f-4287-aaf2-92a34df3339e";
+  const items = ITEMS_LIST;
+  const id = items[0].id;
   const { addToCart, cartItems } = useCartStore();
   const isInCart = cartItems.includes(id);
   return (
@@ -25,7 +27,9 @@ const NewLaunched = () => {
 
         {/* Content */}
         <div className="absolute bottom-2 left-3 lg:bottom-16 lg:left-16 text-white">
-          <h1 className="font-display text-3xl lg:text-7xl mb-1 lg:mb-4">Lost in Time</h1>
+          <h1 className="font-display text-3xl lg:text-7xl mb-1 lg:mb-4">
+            Lost in Time
+          </h1>
           <p className="text-base mb-2 lg:mb-7 opacity-90">
             A time-travel adventure across different centuries.
           </p>

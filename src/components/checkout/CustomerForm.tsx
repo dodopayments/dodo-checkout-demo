@@ -3,23 +3,20 @@ import React, { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import {
-  Form,
-  FormControl,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { Form, FormControl, FormItem, FormLabel } from "@/components/ui/form";
+
 import { Button } from "@/components/ui/button";
 import { PhoneInput } from "react-international-phone";
 import { CountrySelect } from "../ui/CountrySelector/CountrySelect";
 
-import "react-international-phone/style.css";
 import useCartStore from "@/lib/store/cart";
-import { API_KEY, PUBLIC_API, RETURN_URL } from "@/constants/apis";
 import { useToast } from "@/hooks/use-toast";
+import { RETURN_URL } from "@/constants/apis";
+import "react-international-phone/style.css";
+import { createPaymentLink, PaymentServiceError } from "@/lib/create-payment";
+import { TextInputField } from "../ui/FormTextInput";
 
+// Common Text Input Component
 
 const formSchema = z.object({
   firstName: z.string().min(2, "First name must be at least 2 characters"),
@@ -33,21 +30,19 @@ const formSchema = z.object({
   state: z.string().min(2, "State must be at least 2 characters"),
 });
 
+type FormData = z.infer<typeof formSchema>;
+
 const CustomerPaymentForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const { toast } = useToast()
+  const { toast } = useToast();
   const cartItems = useCartStore((state) => state.cartItems);
   const [phoneInputMeta, setPhoneInputMeta] = useState<{
     country: any;
     inputValue: string;
   } | null>(null);
 
-  const {
-    control,
-    handleSubmit,
-    formState: { errors },
-  } = useForm({
+  const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       country: "US",
@@ -62,79 +57,73 @@ const CustomerPaymentForm = () => {
     },
   });
 
-  const createPaymentLink = async (formData: typeof formSchema._type) => {
-      try {
-        const response = await fetch(`${PUBLIC_API}/payments`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${API_KEY}`,
-          },
-          body: JSON.stringify({
-            billing: {
-              city: formData.city,
-              country: formData.country,
-              state: formData.state,
-              street: formData.addressLine,
-              zipcode: parseInt(formData.zipCode),
-            },
-            customer: {
-              email: formData.email,
-              name: `${formData.firstName} ${formData.lastName}`,
-              phone_number: formData.phoneNumber || undefined,
-            },
-            payment_link: true,
-            product_cart: cartItems.map((id) => ({
-              product_id: id,
-              quantity: 1,
-            })),
-            return_url: RETURN_URL,
-          }),
-        });
+  const { control, handleSubmit } = form;
 
-        if (!response.ok) {
-          throw new Error("Payment link creation failed");
-        }
+  const validatePhoneNumber = (phoneNumber: string | undefined) => {
+    if (!phoneNumber || !phoneInputMeta) return true;
 
-        const data = await response.json();
-        window.location.href = data.payment_link;
-      } catch (err) {
-        if (err instanceof Error) {
-          setError(err.message);
-        } else {
-          setError("An unknown error occurred");
-        }
-        console.error("Payment error:", err);
-      }
-   
+    const phoneValue = phoneInputMeta.inputValue;
+    const hasOnlyCountryCode =
+      phoneValue.trim() === `+${phoneInputMeta.country.dialCode}`;
+
+    if (hasOnlyCountryCode) return true;
+
+    return phoneValue.length >= phoneInputMeta.country.format.length;
   };
 
-  const onSubmit = async (data: typeof formSchema._type) => {
-    setIsLoading(true);
-    setError("");
-    if (data.phoneNumber) {
-      const phoneValue = phoneInputMeta?.inputValue || "";
-      const hasOnlyCountryCode =
-        phoneValue.trim() === `+${phoneInputMeta?.country.dialCode}`;
+  const onSubmit = async (data: FormData) => {
+    try {
+      setIsLoading(true);
+      setError("");
 
-      if (hasOnlyCountryCode) {
-        delete data.phoneNumber;
-      } else if (phoneValue.length < phoneInputMeta?.country.format.length) {
+      if (cartItems.length === 0) {
+        throw new Error("Your cart is empty");
+      }
+
+      if (!validatePhoneNumber(data.phoneNumber)) {
         toast({
           title: "Error",
           description: "Please enter a complete phone number",
-        })
+        });
         return;
       }
-    }
-    if (cartItems.length === 0) {
-      setError("Your cart is empty");
-      setIsLoading(false);
-      return;
-    }
 
-    await createPaymentLink(data);
-    setIsLoading(false);
+      const paymentData = {
+        billing: {
+          city: data.city,
+          country: data.country,
+          state: data.state,
+          street: data.addressLine,
+          zipcode: parseInt(data.zipCode),
+        },
+        customer: {
+          email: data.email,
+          name: `${data.firstName} ${data.lastName}`,
+          phone_number: data.phoneNumber || undefined,
+        },
+        payment_link: true,
+        product_cart: cartItems.map((id) => ({
+          product_id: id,
+          quantity: 1,
+        })),
+        return_url: RETURN_URL || "",
+      };
+
+      const response = await createPaymentLink(paymentData);
+      window.location.href = response.payment_link;
+    } catch (err) {
+      const errorMessage =
+        err instanceof PaymentServiceError
+          ? err.message
+          : err instanceof Error
+          ? err.message
+          : "An unknown error occurred";
+
+      setError(errorMessage);
+      console.error("Payment error:", err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -147,66 +136,33 @@ const CustomerPaymentForm = () => {
         </div>
       )}
 
-      <Form {...useForm()}>
+      <Form {...form}>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Controller
+            <TextInputField
               name="firstName"
               control={control}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    First Name <span className="text-red-500">*</span>
-                  </FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="eg: John" />
-                  </FormControl>
-                  {errors.firstName && (
-                    <FormMessage>{errors.firstName.message}</FormMessage>
-                  )}
-                </FormItem>
-              )}
+              label="First Name"
+              placeholder="eg: John"
+              required
             />
 
-            <Controller
+            <TextInputField
               name="lastName"
               control={control}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    Last Name <span className="text-red-500">*</span>
-                  </FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="eg: Doe" />
-                  </FormControl>
-                  {errors.lastName && (
-                    <FormMessage>{errors.lastName.message}</FormMessage>
-                  )}
-                </FormItem>
-              )}
+              label="Last Name"
+              placeholder="eg: Doe"
+              required
             />
           </div>
 
-          <Controller
+          <TextInputField
             name="email"
             control={control}
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>
-                  Email <span className="text-red-500">*</span>
-                </FormLabel>
-                <FormControl>
-                  <Input
-                    {...field}
-                    type="email"
-                    placeholder="eg: johndoe@example.com"
-                  />
-                </FormControl>
-                {errors.email && (
-                  <FormMessage>{errors.email.message}</FormMessage>
-                )}
-              </FormItem>
-            )}
+            label="Email"
+            type="email"
+            placeholder="eg: johndoe@example.com"
+            required
           />
 
           <div className="space-y-4">
@@ -223,77 +179,37 @@ const CustomerPaymentForm = () => {
               />
             </div>
 
-            <Controller
+            <TextInputField
               name="addressLine"
               control={control}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    Street Address <span className="text-red-500">*</span>
-                  </FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="eg: 364 Kent St" />
-                  </FormControl>
-                  {errors.addressLine && (
-                    <FormMessage>{errors.addressLine.message}</FormMessage>
-                  )}
-                </FormItem>
-              )}
+              label="Street Address"
+              placeholder="eg: 364 Kent St"
+              required
             />
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Controller
+              <TextInputField
                 name="city"
                 control={control}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      City <span className="text-red-500">*</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="eg: Sydney" />
-                    </FormControl>
-                    {errors.city && (
-                      <FormMessage>{errors.city.message}</FormMessage>
-                    )}
-                  </FormItem>
-                )}
+                label="City"
+                placeholder="eg: Sydney"
+                required
               />
 
-              <Controller
+              <TextInputField
                 name="state"
                 control={control}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      State <span className="text-red-500">*</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="eg: NSW" />
-                    </FormControl>
-                    {errors.state && (
-                      <FormMessage>{errors.state.message}</FormMessage>
-                    )}
-                  </FormItem>
-                )}
+                label="State"
+                placeholder="eg: NSW"
+                required
               />
 
-              <Controller
+              <TextInputField
                 name="zipCode"
                 control={control}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Zipcode <span className="text-red-500">*</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="eg: 2035" />
-                    </FormControl>
-                    {errors.zipCode && (
-                      <FormMessage>{errors.zipCode.message}</FormMessage>
-                    )}
-                  </FormItem>
-                )}
+                label="Zipcode"
+                placeholder="eg: 2035"
+                required
               />
             </div>
 

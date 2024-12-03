@@ -1,13 +1,11 @@
-
 import { SignOut } from "@phosphor-icons/react/dist/ssr";
 import { signOut } from "next-auth/react";
-import React from "react";
 
 const SignoutButton = () => {
   return (
     <form
       action={async () => {
-        await signOut();
+        await signOut({redirectTo: "/login"});
       }}
     >
       <button

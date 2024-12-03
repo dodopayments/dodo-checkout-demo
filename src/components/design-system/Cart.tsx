@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/sheet";
 import { Basket, Trash } from "@phosphor-icons/react/dist/ssr";
 import Image from "next/image";
-
 import { ITEMS_LIST } from "@/constants/Items";
 import useCartStore from "@/lib/store/cart";
 import Link from "next/link";

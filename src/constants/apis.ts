@@ -4,7 +4,7 @@ let PUBLIC_API: string;
 
 if (typeof window !== "undefined") {
   const hostname = window.location.hostname;
-  const extractedSubdomain = hostname.split(".")[1];
+  const extractedSubdomain = hostname.split(".")[1] || "";
 
   switch (extractedSubdomain) {
     case "live": {

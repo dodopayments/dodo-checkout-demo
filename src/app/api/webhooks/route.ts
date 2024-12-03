@@ -1,69 +1,59 @@
 import { Webhook } from "standardwebhooks";
 import { headers } from "next/headers";
-import { UpdateDatabase } from "@/lib/api/update-database";
+import { config } from "@/lib/config";
+import { logger } from "@/lib/logger";
+import { WebhookPayload } from "@/types/api-types";
+import { handleOneTimePayment, handleSubscription } from "@/lib/api-functions";
+
+const webhook = new Webhook(config.webhook.key);
 
 export async function POST(request: Request) {
-  const wh = new Webhook(process.env.NEXT_PUBLIC_DODO_WEBHOOK_KEY!);
   const headersList = headers();
 
   try {
-    console.log("Received webhook request");
-
     const rawBody = await request.text();
-    console.log("Raw body:", rawBody);
+    logger.info("Received webhook request", { rawBody });
 
-    const headers = {
+    const webhookHeaders = {
       "webhook-id": headersList.get("webhook-id") || "",
       "webhook-signature": headersList.get("webhook-signature") || "",
       "webhook-timestamp": headersList.get("webhook-timestamp") || "",
     };
-    console.log("Headers:", headers);
 
-    await wh.verify(rawBody, headers);
-    console.log("Webhook verified successfully");
+    await webhook.verify(rawBody, webhookHeaders);
+    logger.info("Webhook verified successfully");
 
-    const payload = JSON.parse(rawBody);
-    console.log("Parsed payload:", payload);
+    const payload = JSON.parse(rawBody) as WebhookPayload;
 
-    {
-      console.log("Payment succeeded, forwarding to payment processing route");
+    if (!payload.data?.customer?.email) {
+      throw new Error("Missing customer email in payload");
+    }
 
-      if (
-        payload.data.payload_type === "Subscription" &&
-        payload.type === "subscription.active"
-      ) {
-        UpdateDatabase({
-          customer_email: payload.data.customer.email,
-          type: "Subscription",
-          subscriptionProduct: payload.data.product_id,
-          activated_at: new Date().toISOString(),
-          payment_frequency_interval: payload.data.payment_frequency_interval,
-        });
-      } else if (
-        payload.data.payload_type === "Payment" &&
-        payload.type === "payment.succeeded"
-      ) {
-        UpdateDatabase({
-          customer_email: payload.data.customer.email,
-          type: "OneTime",
-          OneTimeProducts: payload.data.product_cart,
-        });
-      } else {
-        return Response.json(
-          { message: "Webhook received and processed successfully" },
-          { status: 200 }
-        );
-      }
+    const email = payload.data.customer.email;
+
+    if (
+      payload.data.payload_type === "Subscription" &&
+      payload.type === "subscription.active"
+    ) {
+      await handleSubscription(email, payload);
+    } else if (
+      payload.data.payload_type === "Payment" &&
+      payload.type === "payment.succeeded" && !payload.data.subscription_id
+    ) {
+      await handleOneTimePayment(email, payload);
     }
 
     return Response.json(
-      { message: "Webhook received and processed successfully" },
+      { message: "Webhook processed successfully" },
       { status: 200 }
     );
   } catch (error) {
-    console.error("Webhook processing failed:", error);
+    logger.error("Webhook processing failed", error);
     return Response.json(
-      { error: "Webhook processing failed" },
+      {
+        error: "Webhook processing failed",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
       { status: 400 }
     );
   }

@@ -42,18 +42,14 @@ export default function AccountPage() {
       initializeCart(JSON.parse(storedItems));
     }
   }, [initializeCart]);
-  
+
   // Fetch Data
   const fetchSubscriptions = useCallback(async () => {
     try {
       setError(null);
       setIsLoading(true);
 
-      const response = await fetch("/api/get-database", {
-        headers: {
-          Authorization: `Bearer ${process.env.NEXT_PUBLIC_INTERNAL_KEY}`,
-        },
-      });
+      const response = await fetch("/api/get-database");
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);

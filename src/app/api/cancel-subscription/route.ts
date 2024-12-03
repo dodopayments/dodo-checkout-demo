@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { API_KEY } from "@/constants/apis";
+
 import { SubscriptionDetails } from "@/types/api-types";
 import { DatabaseService } from "@/lib/db";
 import { auth } from "@/auth";
@@ -19,14 +19,13 @@ export async function POST(req: NextRequest) {
         method: "PATCH",
         headers: {  
           "Content-Type": "application/json",
-          Authorization: `Bearer ${API_KEY}`,
+          Authorization: `Bearer ${process.env.NEXT_PUBLIC_DODO_API_KEY}`,
         },
         body: JSON.stringify({
           status: "cancelled",
         }),
       }
     );
-    console.log("response", response);
     if (!response.ok) {
       return NextResponse.json(
         {

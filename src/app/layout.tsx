@@ -7,6 +7,7 @@ import NavBar from "@/components/design-system/NavBar";
 import Footer from "@/components/design-system/Footer";
 import { SessionProvider } from "next-auth/react";
 import { PHProvider } from "../hooks/PosthogProvider";
+import { Toaster } from "@/components/ui/toaster";
 
 const instrument_serif = Instrument_Serif({
   subsets: ["latin"],
@@ -43,6 +44,7 @@ export default function RootLayout({
               {children}
               <Footer />
             </main>
+            <Toaster />
           </body>
         </html>
       </PHProvider>

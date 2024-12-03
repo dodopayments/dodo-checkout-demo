@@ -3,7 +3,7 @@
 import React, {  useMemo } from "react";
 import Image from "next/image";
 import { ITEMS_LIST } from "@/constants/Items";
-import useCartStore from "@/store/cart";
+import useCartStore from "@/lib/store/cart";
 
 interface ProductCardProps {
   id: string;

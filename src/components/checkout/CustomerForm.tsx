@@ -16,8 +16,10 @@ import { PhoneInput } from "react-international-phone";
 import { CountrySelect } from "../ui/CountrySelector/CountrySelect";
 
 import "react-international-phone/style.css";
-import useCartStore from "@/store/cart";
+import useCartStore from "@/lib/store/cart";
 import { API_KEY, PUBLIC_API, RETURN_URL } from "@/constants/apis";
+import { useToast } from "@/hooks/use-toast";
+
 
 const formSchema = z.object({
   firstName: z.string().min(2, "First name must be at least 2 characters"),
@@ -31,15 +33,10 @@ const formSchema = z.object({
   state: z.string().min(2, "State must be at least 2 characters"),
 });
 
-const CustomerPaymentForm = ({
-  subscription = false,
-  id,
-}: {
-  subscription?: boolean;
-  id?: string;
-}) => {
+const CustomerPaymentForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const { toast } = useToast()
   const cartItems = useCartStore((state) => state.cartItems);
   const [phoneInputMeta, setPhoneInputMeta] = useState<{
     country: any;
@@ -66,50 +63,6 @@ const CustomerPaymentForm = ({
   });
 
   const createPaymentLink = async (formData: typeof formSchema._type) => {
-    if (subscription) {
-      try {
-        const response = await fetch(`${PUBLIC_API}/subscriptions`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${API_KEY}`,
-          },
-          body: JSON.stringify({
-            billing: {
-              city: formData.city,
-              country: formData.country,
-              state: formData.state,
-              street: formData.addressLine,
-              zipcode: parseInt(formData.zipCode),
-            },
-            customer: {
-              email: formData.email,
-              name: `${formData.firstName} ${formData.lastName}`,
-              phone_number: formData.phoneNumber || undefined,
-            },
-            payment_link: true,
-            product_id: id,
-            quantity: 1,
-            return_url: RETURN_URL,
-          }),
-        });
-
-        if (!response.ok) {
-          throw new Error("Payment link creation failed");
-        }
-
-        const data = await response.json();
-        console.log(data);
-        window.location.href = data.payment_link;
-      } catch (err) {
-        if (err instanceof Error) {
-          setError(err.message);
-        } else {
-          setError("An unknown error occurred");
-        }
-        console.error("Payment error:", err);
-      }
-    } else {
       try {
         const response = await fetch(`${PUBLIC_API}/payments`, {
           method: "POST",
@@ -144,7 +97,6 @@ const CustomerPaymentForm = ({
         }
 
         const data = await response.json();
-        console.log(data);
         window.location.href = data.payment_link;
       } catch (err) {
         if (err instanceof Error) {
@@ -154,7 +106,7 @@ const CustomerPaymentForm = ({
         }
         console.error("Payment error:", err);
       }
-    }
+   
   };
 
   const onSubmit = async (data: typeof formSchema._type) => {
@@ -168,11 +120,14 @@ const CustomerPaymentForm = ({
       if (hasOnlyCountryCode) {
         delete data.phoneNumber;
       } else if (phoneValue.length < phoneInputMeta?.country.format.length) {
-        console.error("Please enter a complete phone number");
+        toast({
+          title: "Error",
+          description: "Please enter a complete phone number",
+        })
         return;
       }
     }
-    if (cartItems.length === 0 && !subscription) {
+    if (cartItems.length === 0) {
       setError("Your cart is empty");
       setIsLoading(false);
       return;

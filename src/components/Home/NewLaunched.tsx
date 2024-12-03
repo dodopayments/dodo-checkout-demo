@@ -1,5 +1,5 @@
 "use client";
-import useCartStore from "@/store/cart";
+import useCartStore from "@/lib/store/cart";
 import Image from "next/image";
 import { Button } from "../ui/button";
 import { ITEMS_LIST } from "../../constants/Items";

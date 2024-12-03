@@ -1,13 +1,15 @@
-import { signOut } from "@/auth";
-import {
-  CheckCircle,
-  DownloadSimple,
-  SignOut,
-} from "@phosphor-icons/react/dist/ssr";
+"use client";
+import SignoutButton from "@/components/design-system/SignoutButton";
+import { ITEMS_LIST } from "@/constants/Items";
+import { CheckCircle, DownloadSimple } from "@phosphor-icons/react/dist/ssr";
+import { Loader } from "lucide-react";
 
 import Image from "next/image";
+import { useEffect, useState } from "react";
+
 const SUBSCRIPTION_PLANS = [
   {
+    id: "pdt_a7rZcncnbD9sySxO4lj2Y",
     title: "Monthly plan",
     price: 15.0,
     image: {
@@ -23,6 +25,7 @@ const SUBSCRIPTION_PLANS = [
     imagePosition: "right",
   },
   {
+    id: "pdt_PKfYkaNVJ7m8QncvaaVip",
     title: "Yearly plan",
     price: 100.0,
     image: {
@@ -47,46 +50,98 @@ const Feature = ({ text }: { text: string }) => (
   </div>
 );
 
-const Subscriptions = () => {
+const SubscriptionCard = ({
+  plan,
+  data,
+}: {
+  plan: (typeof SUBSCRIPTION_PLANS)[0];
+  data: {
+    activated_at: string;
+    payment_frequency_interval: string;
+    product_id: string;
+  };
+}) => {
   return (
-    <div className="flex my-5 flex-col items-start">
-      <span className="text-[#232321] font-medium text-[20px]">
-        Active Subscriptions
-      </span>
+    <div>
       <div className=" flex items-center my-3 gap-8">
         <Image
-          src="/books/stack/Monthly.webp"
+          src={plan.image.src}
           alt="Subscription"
           width={350}
           height={280}
         />
         <div className="bg-[#232321] p-3 rounded-xl grid grid-cols-2 items-start  grid-rows-2 ">
-          {SUBSCRIPTION_PLANS[0].features.map((feature, index) => (
+          {plan.features.map((feature, index) => (
             <Feature key={index} text={feature} />
           ))}
         </div>
       </div>
       <div className="flex flex-col items-start">
         <span className="text-[#232321] font-semibold text-[18px]">
-          Monthly Subscriptions
+          {plan.title}
         </span>
         <div className="flex items-center text-neutral-600 gap-2">
-          <span>Purchased on 15 Oct 24</span>
+          <span>
+            Purchased on{" "}
+            {new Date(data.activated_at).toLocaleDateString("en-GB", {
+              day: "2-digit",
+              month: "short",
+              year: "2-digit",
+            })}
+          </span>
           <span className="h-3 w-[1px] border-l border-neutral-800" />
-          <span>Next billing on 15 Nov 24</span>
+          <span>
+            Billing frequency is one {data.payment_frequency_interval}
+          </span>
         </div>
       </div>
     </div>
   );
 };
 
+const Subscriptions = ({
+  products,
+}: {
+  products: {
+    activated_at: string;
+    payment_frequency_interval: string;
+    product_id: string;
+  }[];
+}) => {
+  const purchases = SUBSCRIPTION_PLANS.filter((plan) =>
+    products.some((product) => product.product_id === plan.id)
+  );
+  return (
+    <div className="flex my-5 flex-col items-start">
+      <span className="text-[#232321] font-medium text-[20px]">
+        Active Subscriptions
+      </span>
+      {!purchases.length ? (
+        <div className="bg-[#232321] mt-3 w-full max-w-sm py-6 px-8 rounded-xl text-white">
+          No Active Subscriptions
+        </div>
+      ) : (
+        <>
+          {purchases.map((purchase, index) => (
+            <SubscriptionCard
+              key={index}
+              plan={purchase}
+              data={products[index]}
+            />
+          ))}
+        </>
+      )}
+    </div>
+  );
+};
+
 interface PurchaseCardProps {
   title: string;
-  date: string;
+  description: string;
   imageSrc: string;
 }
 
-const PurchaseCard = ({ title, date, imageSrc }: PurchaseCardProps) => {
+const PurchaseCard = ({ title, description, imageSrc }: PurchaseCardProps) => {
   return (
     <div className="flex flex-col w-[250px]">
       <div className="relative aspect-[4/5] rounded-xl overflow-hidden mb-3">
@@ -95,7 +150,7 @@ const PurchaseCard = ({ title, date, imageSrc }: PurchaseCardProps) => {
       <div className="flex flex-col gap-1">
         <h3 className="text-[#232321] font-medium">{title}</h3>
         <div className="flex items-center justify-between">
-          <span className="text-sm text-neutral-600">Purchased on {date}</span>
+          <span className="text-sm text-neutral-600">{description}</span>
           <button className="p-2 bg-black rounded-lg hover:bg-neutral-900 transition-colors">
             <DownloadSimple size={20} className="text-white" />
           </button>
@@ -105,24 +160,8 @@ const PurchaseCard = ({ title, date, imageSrc }: PurchaseCardProps) => {
   );
 };
 
-const OneTimePurchase = () => {
-  const purchases = [
-    {
-      title: "Lost in Time",
-      date: "26 Oct 24",
-      imageSrc: "/books/lost-in-time.webp",
-    },
-    {
-      title: "Memoirs of a Wanderer",
-      date: "10 Sep 24",
-      imageSrc: "/books/memoirs-of-a-wanderer.webp",
-    },
-    {
-      title: "The Himalayan Escape",
-      date: "10 Sep 24",
-      imageSrc: "/books/himalyan-escape.webp",
-    },
-  ];
+const OneTimePurchase = ({ products }: { products: string[] }) => {
+  const purchases = ITEMS_LIST.filter((plan) => products.includes(plan.id));
 
   return (
     <div className="flex my-5 flex-col items-start">
@@ -134,7 +173,7 @@ const OneTimePurchase = () => {
           <PurchaseCard
             key={index}
             title={purchase.title}
-            date={purchase.date}
+            description="Dodo demo book"
             imageSrc={purchase.imageSrc}
           />
         ))}
@@ -142,33 +181,57 @@ const OneTimePurchase = () => {
     </div>
   );
 };
-const page = () => {
+const Page = () => {
+  const [OneTimeProducts, setOneTimeProducts] = useState([]);
+  const [subscriptionProducts, setSubscriptionProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(`/api/get-database`, {
+          headers: {
+            Authorization: `Bearer ${process.env.NEXT_PUBLIC_INTERNAL_KEY}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error("Network response was not ok");
+        }
+
+        const { product_ids, subscription_ids } = await response.json();
+        setOneTimeProducts(product_ids);
+        const test = subscription_ids.map((id: string) => JSON.parse(id));
+        setSubscriptionProducts(test);
+      } catch (error) {
+        console.error("Fetch error:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return (<div className="flex w-full min-h-[55vh] h-full justify-center items-center">
+      <Loader className="animate-spin" />
+    </div>)
+  }
+
   return (
     <div className="w-full h-full p-10 pb-0">
       <div className="bg-white rounded-[20px] flex flex-col p-10">
         <div className="flex items-center justify-between">
           <h1 className="font-display text-4xl">My Account</h1>
-          <form
-            action={async () => {
-              "use server";
-              await signOut();
-            }}
-          >
-            <button
-              type="submit"
-              className="text-red-500 flex items-center gap-1 hover:text-red-400"
-            >
-              Sign out
-              <SignOut />
-            </button>
-          </form>
+          <SignoutButton />
         </div>
-
-        <Subscriptions />
-        <OneTimePurchase />
+        <OneTimePurchase products={OneTimeProducts} />
+        <Subscriptions products={subscriptionProducts} />
       </div>
     </div>
   );
 };
 
-export default page;
+export default Page;

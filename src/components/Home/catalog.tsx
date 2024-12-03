@@ -1,9 +1,10 @@
-'use client'
+"use client";
 import { useEffect } from "react";
 import Image from "next/image";
 import { Button } from "../ui/button";
-import useCartStore from "@/store/cart";
+import useCartStore from "@/lib/store/cart";
 import { ITEMS_LIST } from "@/constants/Items";
+import { toast } from "@/hooks/use-toast";
 
 interface ItemProps {
   id: string;
@@ -56,7 +57,13 @@ const Item: React.FC<ItemProps> = ({
         <div className="text-[#232321] pl-1 font-semibold">{price}</div>
       )}
       <Button
-        onClick={() => addToCart(id)}
+        onClick={() => {
+          addToCart(id);
+            toast({
+            title: "Item Added",
+            description: "You can view your cart to complete the purchase.",
+            });
+        }}
         disabled={isInCart}
         className={`py-2 ${isInCart ? "bg-neutral-800" : ""}`}
       >

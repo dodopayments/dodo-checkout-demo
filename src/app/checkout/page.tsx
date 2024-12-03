@@ -1,7 +1,7 @@
 "use client";
-import CustomerForm from "@/components/checkout/FormPart";
+import CustomerForm from "@/components/checkout/CustomerForm";
 import ProductPart from "@/components/checkout/ProductPart";
-import useCartStore from "@/store/cart";
+import useCartStore from "@/lib/store/cart";
 import React, { useEffect } from "react";
 
 const Page = () => {

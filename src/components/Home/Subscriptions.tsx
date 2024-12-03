@@ -36,7 +36,7 @@ const SubscriptionCard = ({
         <Feature key={index} text={feature} />
       ))}
       <Link
-        href={`/checkout/subscription/${id}`}
+        href={`${process.env.NEXT_PUBLIC_DODO_CHECKOUT_URL}/${id}?redirect_url=${process.env.NEXT_PUBLIC_RETURN_URL}`}
         className="mt-8 w-fit rounded-lg bg-[#8B0000] px-8 py-3 font-medium text-white transition-colors hover:bg-[#A00000]"
       >
         SUBSCRIBE For ${price.toFixed(2)}

@@ -1,0 +1,60 @@
+import { Webhook } from "standardwebhooks";
+import { headers } from "next/headers";
+import { config } from "@/lib/config";
+import { logger } from "@/lib/logger";
+import { WebhookPayload } from "@/types/api-types";
+import { handleOneTimePayment, handleSubscription } from "@/lib/api-functions";
+
+const webhook = new Webhook(config.webhook.key);
+
+export async function POST(request: Request) {
+  const headersList = headers();
+
+  try {
+    const rawBody = await request.text();
+    logger.info("Received webhook request", { rawBody });
+
+    const webhookHeaders = {
+      "webhook-id": headersList.get("webhook-id") || "",
+      "webhook-signature": headersList.get("webhook-signature") || "",
+      "webhook-timestamp": headersList.get("webhook-timestamp") || "",
+    };
+
+    await webhook.verify(rawBody, webhookHeaders);
+    logger.info("Webhook verified successfully");
+
+    const payload = JSON.parse(rawBody) as WebhookPayload;
+
+    if (!payload.data?.customer?.email) {
+      throw new Error("Missing customer email in payload");
+    }
+
+    const email = payload.data.customer.email;
+
+    if (
+      payload.data.payload_type === "Subscription" &&
+      payload.type === "subscription.active"
+    ) {
+      await handleSubscription(email, payload);
+    } else if (
+      payload.data.payload_type === "Payment" &&
+      payload.type === "payment.succeeded" && !payload.data.subscription_id
+    ) {
+      await handleOneTimePayment(email, payload);
+    }
+
+    return Response.json(
+      { message: "Webhook processed successfully" },
+      { status: 200 }
+    );
+  } catch (error) {
+    logger.error("Webhook processing failed", error);
+    return Response.json(
+      {
+        error: "Webhook processing failed",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 400 }
+    );
+  }
+}

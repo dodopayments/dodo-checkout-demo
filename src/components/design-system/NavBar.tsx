@@ -2,8 +2,9 @@ import { User } from "@phosphor-icons/react/dist/ssr";
 import Image from "next/image";
 import Link from "next/link";
 import React from "react";
-import { Cart } from "./Cart";
+
 import { auth } from "@/auth";
+import Cart from "./Cart";
 
 const NavBar = async () => {
   const session = await auth();
@@ -18,7 +19,7 @@ const NavBar = async () => {
               width={32}
               height={32}
             />
-            <h1 className="text-[#232321] font-display  text-3xl">
+            <h1 className="text-[#232321] font-display text-2xl lg:text-3xl">
               Atlas Ebook Co
             </h1>
           </header>

@@ -1,174 +1,122 @@
-import { signOut } from "@/auth";
-import {
-  CheckCircle,
-  DownloadSimple,
-  SignOut,
-} from "@phosphor-icons/react/dist/ssr";
+// app/account/page.tsx
+"use client";
+import { Suspense, useState, useCallback, useEffect } from "react";
+import SignoutButton from "@/components/design-system/SignoutButton";
+import { ITEMS_LIST, SUBSCRIPTION_PLANS } from "@/constants/Items";
+import { Loader } from "lucide-react";
+import { OneTimePurchase } from "@/components/my-account/purchases";
+import { Subscriptions } from "@/components/my-account/subscriptions";
+import useCartStore from "@/lib/store/cart";
 
-import Image from "next/image";
-const SUBSCRIPTION_PLANS = [
-  {
-    title: "Monthly plan",
-    price: 15.0,
-    image: {
-      src: "/books/stack/Monthly.webp",
-      width: "w-[35vw]",
-    },
-    features: [
-      "Get 2 books every month",
-      "Early access to new releases",
-      "Weekly newsletter",
-      "Monthly webinar invite",
-    ],
-    imagePosition: "right",
-  },
-  {
-    title: "Yearly plan",
-    price: 100.0,
-    image: {
-      src: "/books/stack/Yearly.webp",
-      width: "w-[45vw]",
-    },
-    features: [
-      "Get 20 books every Year",
-      "Early access to new releases",
-      "Weekly newsletter",
-      "Monthly webinar invite",
-      "Dinner with author",
-    ],
-    imagePosition: "left",
-  },
-];
+// Types
+interface SubscriptionProduct {
+  activated_at: string;
+  payment_frequency_interval: string;
+  subscription_id: string;
+  product_id: string;
+}
 
-const Feature = ({ text }: { text: string }) => (
-  <div className="flex items-center text-left p-2  text-white gap-2">
-    <CheckCircle className="text-white mr-2" size={24} weight="fill" />
-    <span>{text}</span>
+// Components
+const LoadingSpinner = () => (
+  <div
+    className="flex w-full min-h-[55vh] h-full justify-center items-center"
+    role="status"
+  >
+    <Loader className="animate-spin" aria-label="Loading..." />
   </div>
 );
 
-const Subscriptions = () => {
-  return (
-    <div className="flex my-5 flex-col items-start">
-      <span className="text-[#232321] font-medium text-[20px]">
-        Active Subscriptions
-      </span>
-      <div className=" flex items-center my-3 gap-8">
-        <Image
-          src="/books/stack/Monthly.webp"
-          alt="Subscription"
-          width={350}
-          height={280}
-        />
-        <div className="bg-[#232321] p-3 rounded-xl grid grid-cols-2 items-start  grid-rows-2 ">
-          {SUBSCRIPTION_PLANS[0].features.map((feature, index) => (
-            <Feature key={index} text={feature} />
-          ))}
-        </div>
-      </div>
-      <div className="flex flex-col items-start">
-        <span className="text-[#232321] font-semibold text-[18px]">
-          Monthly Subscriptions
-        </span>
-        <div className="flex items-center text-neutral-600 gap-2">
-          <span>Purchased on 15 Oct 24</span>
-          <span className="h-3 w-[1px] border-l border-neutral-800" />
-          <span>Next billing on 15 Nov 24</span>
-        </div>
-      </div>
-    </div>
-  );
-};
+export default function AccountPage() {
+  // State
+  const [oneTimeProducts, setOneTimeProducts] = useState<string[]>([]);
+  const [subscriptionProducts, setSubscriptionProducts] = useState<
+    SubscriptionProduct[]
+  >([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { initializeCart } = useCartStore();
 
-interface PurchaseCardProps {
-  title: string;
-  date: string;
-  imageSrc: string;
+  useEffect(() => {
+    const storedItems = localStorage.getItem("cartItems");
+    if (storedItems) {
+      initializeCart(JSON.parse(storedItems));
+    }
+  }, [initializeCart]);
+  
+  // Fetch Data
+  const fetchSubscriptions = useCallback(async () => {
+    try {
+      setError(null);
+      setIsLoading(true);
+
+      const response = await fetch("/api/get-database", {
+        headers: {
+          Authorization: `Bearer ${process.env.NEXT_PUBLIC_INTERNAL_KEY}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const { product_ids, subscription_ids } = await response.json();
+
+      setOneTimeProducts(product_ids ?? []);
+      setSubscriptionProducts(
+        subscription_ids?.map((id: string) => JSON.parse(id)) ?? []
+      );
+    } catch (err) {
+      console.error("Failed to fetch subscriptions:", err);
+      setError("Failed to load account data. Please try again later.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Initial Load
+  useEffect(() => {
+    fetchSubscriptions();
+  }, [fetchSubscriptions]);
+
+  // Error UI
+  if (error) {
+    return (
+      <main className="w-full h-full p-10 pb-0">
+        <div className="bg-white rounded-[20px] flex flex-col p-10">
+          <header className="flex items-center justify-between">
+            <h1 className="font-display text-4xl">My Account</h1>
+            <SignoutButton />
+          </header>
+          <div className="flex items-center justify-center min-h-[55vh]">
+            <p className="text-red-600">{error}</p>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  return (
+    <main className="w-full h-full p-4 lg:p-10 pb-0">
+      <div className="bg-white rounded-[20px] flex flex-col p-5 lg:p-10">
+        <header className="flex items-center justify-between">
+          <h1 className="font-display text-3xl lg:text-4xl">My Account</h1>
+          <SignoutButton />
+        </header>
+
+        <Suspense fallback={<LoadingSpinner />}>
+          {isLoading ? (
+            <LoadingSpinner />
+          ) : (
+            <>
+              <OneTimePurchase products={oneTimeProducts} items={ITEMS_LIST} />
+              <Subscriptions
+                products={subscriptionProducts}
+                plans={SUBSCRIPTION_PLANS}
+              />
+            </>
+          )}
+        </Suspense>
+      </div>
+    </main>
+  );
 }
-
-const PurchaseCard = ({ title, date, imageSrc }: PurchaseCardProps) => {
-  return (
-    <div className="flex flex-col w-[250px]">
-      <div className="relative aspect-[4/5] rounded-xl overflow-hidden mb-3">
-        <Image src={imageSrc} alt={title} className="object-cover" fill />
-      </div>
-      <div className="flex flex-col gap-1">
-        <h3 className="text-[#232321] font-medium">{title}</h3>
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-neutral-600">Purchased on {date}</span>
-          <button className="p-2 bg-black rounded-lg hover:bg-neutral-900 transition-colors">
-            <DownloadSimple size={20} className="text-white" />
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const OneTimePurchase = () => {
-  const purchases = [
-    {
-      title: "Lost in Time",
-      date: "26 Oct 24",
-      imageSrc: "/books/lost-in-time.webp",
-    },
-    {
-      title: "Memoirs of a Wanderer",
-      date: "10 Sep 24",
-      imageSrc: "/books/memoirs-of-a-wanderer.webp",
-    },
-    {
-      title: "The Himalayan Escape",
-      date: "10 Sep 24",
-      imageSrc: "/books/himalyan-escape.webp",
-    },
-  ];
-
-  return (
-    <div className="flex my-5 flex-col items-start">
-      <span className="text-[#232321] font-medium text-[20px] mb-4">
-        Purchases
-      </span>
-      <div className="flex gap-6 flex-wrap">
-        {purchases.map((purchase, index) => (
-          <PurchaseCard
-            key={index}
-            title={purchase.title}
-            date={purchase.date}
-            imageSrc={purchase.imageSrc}
-          />
-        ))}
-      </div>
-    </div>
-  );
-};
-const page = () => {
-  return (
-    <div className="w-full h-full p-10 pb-0">
-      <div className="bg-white rounded-[20px] flex flex-col p-10">
-        <div className="flex items-center justify-between">
-          <h1 className="font-display text-4xl">My Account</h1>
-          <form
-            action={async () => {
-              "use server";
-              await signOut();
-            }}
-          >
-            <button
-              type="submit"
-              className="text-red-500 flex items-center gap-1 hover:text-red-400"
-            >
-              Sign out
-              <SignOut />
-            </button>
-          </form>
-        </div>
-
-        <Subscriptions />
-        <OneTimePurchase />
-      </div>
-    </div>
-  );
-};
-
-export default page;

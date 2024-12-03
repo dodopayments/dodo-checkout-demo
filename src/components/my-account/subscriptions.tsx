@@ -24,6 +24,10 @@ const SubscriptionCard = memo(({ plan, data, onCancelled }: SubscriptionCardProp
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
+  if (!data || !plan) {
+    return null;
+  }
+
   const purchaseDate = new Date(data.activated_at).toLocaleDateString("en-GB", {
     day: "2-digit",
     month: "short",
@@ -70,14 +74,14 @@ const SubscriptionCard = memo(({ plan, data, onCancelled }: SubscriptionCardProp
     <div className="subscription-card">
       <div className="flex lg:flex-row flex-col items-center my-3 gap-8">
         <Image
-          src={plan.image.src}
+          src={plan.image?.src || ""}
           alt={`${plan.title} subscription`}
           width={350}
           height={280}
           priority={true}
         />
         <div className="bg-[#232321] p-3 rounded-xl grid grid-cols-2 items-start grid-rows-2">
-          {plan.features.map((feature, index) => (
+          {plan.features?.map((feature, index) => (
             <Feature key={`${feature}-${index}`} text={feature} />
           ))}
         </div>
@@ -91,7 +95,7 @@ const SubscriptionCard = memo(({ plan, data, onCancelled }: SubscriptionCardProp
           <span className="h-3 w-[1px] border-l hidden lg:block border-neutral-800" />
           <span>
             Billing frequency is one{" "}
-            {data.payment_frequency_interval.toLowerCase()}
+            {data.payment_frequency_interval?.toLowerCase()}
           </span>
         </div>
       </div>

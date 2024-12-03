@@ -3,20 +3,23 @@ import React, { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Form, FormControl, FormItem, FormLabel } from "@/components/ui/form";
-
+import {
+  Form,
+  FormControl,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { PhoneInput } from "react-international-phone";
 import { CountrySelect } from "../ui/CountrySelector/CountrySelect";
 
-import useCartStore from "@/lib/store/cart";
-import { useToast } from "@/hooks/use-toast";
-import { RETURN_URL } from "@/constants/apis";
 import "react-international-phone/style.css";
-import { createPaymentLink, PaymentServiceError } from "@/lib/create-payment";
-import { TextInputField } from "../ui/FormTextInput";
+import useCartStore from "@/lib/store/cart";
+import { API_KEY, PUBLIC_API, RETURN_URL } from "@/constants/apis";
+import { useToast } from "@/hooks/use-toast";
 
-// Common Text Input Component
 
 const formSchema = z.object({
   firstName: z.string().min(2, "First name must be at least 2 characters"),
@@ -30,19 +33,21 @@ const formSchema = z.object({
   state: z.string().min(2, "State must be at least 2 characters"),
 });
 
-type FormData = z.infer<typeof formSchema>;
-
 const CustomerPaymentForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const { toast } = useToast();
+  const { toast } = useToast()
   const cartItems = useCartStore((state) => state.cartItems);
   const [phoneInputMeta, setPhoneInputMeta] = useState<{
     country: any;
     inputValue: string;
   } | null>(null);
 
-  const form = useForm<FormData>({
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
       country: "US",
@@ -57,73 +62,79 @@ const CustomerPaymentForm = () => {
     },
   });
 
-  const { control, handleSubmit } = form;
+  const createPaymentLink = async (formData: typeof formSchema._type) => {
+      try {
+        const response = await fetch(`${PUBLIC_API}/payments`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${API_KEY}`,
+          },
+          body: JSON.stringify({
+            billing: {
+              city: formData.city,
+              country: formData.country,
+              state: formData.state,
+              street: formData.addressLine,
+              zipcode: parseInt(formData.zipCode),
+            },
+            customer: {
+              email: formData.email,
+              name: `${formData.firstName} ${formData.lastName}`,
+              phone_number: formData.phoneNumber || undefined,
+            },
+            payment_link: true,
+            product_cart: cartItems.map((id) => ({
+              product_id: id,
+              quantity: 1,
+            })),
+            return_url: RETURN_URL,
+          }),
+        });
 
-  const validatePhoneNumber = (phoneNumber: string | undefined) => {
-    if (!phoneNumber || !phoneInputMeta) return true;
+        if (!response.ok) {
+          throw new Error("Payment link creation failed");
+        }
 
-    const phoneValue = phoneInputMeta.inputValue;
-    const hasOnlyCountryCode =
-      phoneValue.trim() === `+${phoneInputMeta.country.dialCode}`;
-
-    if (hasOnlyCountryCode) return true;
-
-    return phoneValue.length >= phoneInputMeta.country.format.length;
+        const data = await response.json();
+        window.location.href = data.payment_link;
+      } catch (err) {
+        if (err instanceof Error) {
+          setError(err.message);
+        } else {
+          setError("An unknown error occurred");
+        }
+        console.error("Payment error:", err);
+      }
+   
   };
 
-  const onSubmit = async (data: FormData) => {
-    try {
-      setIsLoading(true);
-      setError("");
+  const onSubmit = async (data: typeof formSchema._type) => {
+    setIsLoading(true);
+    setError("");
+    if (data.phoneNumber) {
+      const phoneValue = phoneInputMeta?.inputValue || "";
+      const hasOnlyCountryCode =
+        phoneValue.trim() === `+${phoneInputMeta?.country.dialCode}`;
 
-      if (cartItems.length === 0) {
-        throw new Error("Your cart is empty");
-      }
-
-      if (!validatePhoneNumber(data.phoneNumber)) {
+      if (hasOnlyCountryCode) {
+        delete data.phoneNumber;
+      } else if (phoneValue.length < phoneInputMeta?.country.format.length) {
         toast({
           title: "Error",
           description: "Please enter a complete phone number",
-        });
+        })
         return;
       }
-
-      const paymentData = {
-        billing: {
-          city: data.city,
-          country: data.country,
-          state: data.state,
-          street: data.addressLine,
-          zipcode: parseInt(data.zipCode),
-        },
-        customer: {
-          email: data.email,
-          name: `${data.firstName} ${data.lastName}`,
-          phone_number: data.phoneNumber || undefined,
-        },
-        payment_link: true,
-        product_cart: cartItems.map((id) => ({
-          product_id: id,
-          quantity: 1,
-        })),
-        return_url: RETURN_URL || "",
-      };
-
-      const response = await createPaymentLink(paymentData);
-      window.location.href = response.payment_link;
-    } catch (err) {
-      const errorMessage =
-        err instanceof PaymentServiceError
-          ? err.message
-          : err instanceof Error
-          ? err.message
-          : "An unknown error occurred";
-
-      setError(errorMessage);
-      console.error("Payment error:", err);
-    } finally {
-      setIsLoading(false);
     }
+    if (cartItems.length === 0) {
+      setError("Your cart is empty");
+      setIsLoading(false);
+      return;
+    }
+
+    await createPaymentLink(data);
+    setIsLoading(false);
   };
 
   return (
@@ -136,33 +147,66 @@ const CustomerPaymentForm = () => {
         </div>
       )}
 
-      <Form {...form}>
+      <Form {...useForm()}>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <TextInputField
+            <Controller
               name="firstName"
               control={control}
-              label="First Name"
-              placeholder="eg: John"
-              required
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    First Name <span className="text-red-500">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="eg: John" />
+                  </FormControl>
+                  {errors.firstName && (
+                    <FormMessage>{errors.firstName.message}</FormMessage>
+                  )}
+                </FormItem>
+              )}
             />
 
-            <TextInputField
+            <Controller
               name="lastName"
               control={control}
-              label="Last Name"
-              placeholder="eg: Doe"
-              required
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    Last Name <span className="text-red-500">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="eg: Doe" />
+                  </FormControl>
+                  {errors.lastName && (
+                    <FormMessage>{errors.lastName.message}</FormMessage>
+                  )}
+                </FormItem>
+              )}
             />
           </div>
 
-          <TextInputField
+          <Controller
             name="email"
             control={control}
-            label="Email"
-            type="email"
-            placeholder="eg: johndoe@example.com"
-            required
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>
+                  Email <span className="text-red-500">*</span>
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    type="email"
+                    placeholder="eg: johndoe@example.com"
+                  />
+                </FormControl>
+                {errors.email && (
+                  <FormMessage>{errors.email.message}</FormMessage>
+                )}
+              </FormItem>
+            )}
           />
 
           <div className="space-y-4">
@@ -179,37 +223,77 @@ const CustomerPaymentForm = () => {
               />
             </div>
 
-            <TextInputField
+            <Controller
               name="addressLine"
               control={control}
-              label="Street Address"
-              placeholder="eg: 364 Kent St"
-              required
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    Street Address <span className="text-red-500">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="eg: 364 Kent St" />
+                  </FormControl>
+                  {errors.addressLine && (
+                    <FormMessage>{errors.addressLine.message}</FormMessage>
+                  )}
+                </FormItem>
+              )}
             />
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <TextInputField
+              <Controller
                 name="city"
                 control={control}
-                label="City"
-                placeholder="eg: Sydney"
-                required
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      City <span className="text-red-500">*</span>
+                    </FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="eg: Sydney" />
+                    </FormControl>
+                    {errors.city && (
+                      <FormMessage>{errors.city.message}</FormMessage>
+                    )}
+                  </FormItem>
+                )}
               />
 
-              <TextInputField
+              <Controller
                 name="state"
                 control={control}
-                label="State"
-                placeholder="eg: NSW"
-                required
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      State <span className="text-red-500">*</span>
+                    </FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="eg: NSW" />
+                    </FormControl>
+                    {errors.state && (
+                      <FormMessage>{errors.state.message}</FormMessage>
+                    )}
+                  </FormItem>
+                )}
               />
 
-              <TextInputField
+              <Controller
                 name="zipCode"
                 control={control}
-                label="Zipcode"
-                placeholder="eg: 2035"
-                required
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Zipcode <span className="text-red-500">*</span>
+                    </FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="eg: 2035" />
+                    </FormControl>
+                    {errors.zipCode && (
+                      <FormMessage>{errors.zipCode.message}</FormMessage>
+                    )}
+                  </FormItem>
+                )}
               />
             </div>
 

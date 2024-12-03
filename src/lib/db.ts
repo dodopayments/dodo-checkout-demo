@@ -1,19 +1,17 @@
-import { createClient } from '@supabase/supabase-js';
-import { config } from './config';
-import { SubscriptionDetails } from '@/types/api-types';
-
+import { createClient } from "@supabase/supabase-js";
+import { SubscriptionDetails } from "@/types/api-types";
 
 export const supabase = createClient(
-  config.supabase.url,
-  config.supabase.serviceRoleKey
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
 export class DatabaseService {
   static async getUserPurchases(email: string) {
     const { data, error } = await supabase
-      .from('user_purchases')
-      .select('product_ids, subscription_ids')
-      .eq('email', email)
+      .from("user_purchases")
+      .select("product_ids, subscription_ids")
+      .eq("email", email)
       .single();
 
     return { data, error };
@@ -27,12 +25,12 @@ export class DatabaseService {
     }
   ) {
     const { data, error } = await supabase
-      .from('user_purchases')
+      .from("user_purchases")
       .update({
         ...updates,
         updated_at: new Date().toISOString(),
       })
-      .eq('email', email)
+      .eq("email", email)
       .select();
 
     return { data, error };
@@ -46,12 +44,14 @@ export class DatabaseService {
     }
   ) {
     const { data, error } = await supabase
-      .from('user_purchases')
-      .insert([{
-        email,
-        ...record,
-        updated_at: new Date().toISOString(),
-      }])
+      .from("user_purchases")
+      .insert([
+        {
+          email,
+          ...record,
+          updated_at: new Date().toISOString(),
+        },
+      ])
       .select();
 
     return { data, error };

@@ -1,11 +1,11 @@
 import { Webhook } from "standardwebhooks";
 import { headers } from "next/headers";
-import { config } from "@/lib/config";
+
 import { logger } from "@/lib/logger";
 import { WebhookPayload } from "@/types/api-types";
 import { handleOneTimePayment, handleSubscription } from "@/lib/api-functions";
 
-const webhook = new Webhook(config.webhook.key);
+const webhook = new Webhook(process.env.NEXT_PUBLIC_DODO_WEBHOOK_KEY!);
 
 export async function POST(request: Request) {
   const headersList = headers();

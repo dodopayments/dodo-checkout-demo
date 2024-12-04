@@ -13,6 +13,7 @@ export type OneTimeProduct = {
   export type WebhookPayload = {
     type: string;
     data: {
+      status?: 'pending' | 'active' | 'on_hold' | 'paused' | 'cancelled' | 'failed' | 'expired';
       payload_type: string;
       customer: {
         email: string;
@@ -24,3 +25,11 @@ export type OneTimeProduct = {
     };
   };
   
+  
+export interface UpdateSubscriptionResult {
+  success: boolean;
+  error?: {
+    message: string;
+    status: number;
+  };
+}

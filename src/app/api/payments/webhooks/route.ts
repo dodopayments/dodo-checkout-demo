@@ -2,7 +2,11 @@ import { Webhook } from "standardwebhooks";
 import { headers } from "next/headers";
 import { logger } from "@/lib/logger";
 import { WebhookPayload } from "@/types/api-types";
-import { handleOneTimePayment, handleSubscription } from "@/lib/api-functions";
+import {
+  handleOneTimePayment,
+  handleSubscription,
+  updateSubscriptionInDatabase,
+} from "@/lib/api-functions";
 
 const webhook = new Webhook(process.env.NEXT_PUBLIC_DODO_WEBHOOK_KEY!);
 
@@ -30,14 +34,27 @@ export async function POST(request: Request) {
 
     const email = payload.data.customer.email;
 
-    if (
-      payload.data.payload_type === "Subscription" &&
-      payload.type === "subscription.active"
-    ) {
-      await handleSubscription(email, payload);
+    if (payload.data.payload_type === "Subscription") {
+      switch (payload.data.status) {
+        
+        case "active":
+          await handleSubscription(email, payload);
+          break;
+
+        case "pending":
+          break;
+
+        default:
+          await updateSubscriptionInDatabase(
+            email,
+            payload.data.subscription_id!
+          );
+          break;
+      }
     } else if (
       payload.data.payload_type === "Payment" &&
-      payload.type === "payment.succeeded" && !payload.data.subscription_id
+      payload.type === "payment.succeeded" &&
+      !payload.data.subscription_id
     ) {
       await handleOneTimePayment(email, payload);
     }

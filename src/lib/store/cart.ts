@@ -2,14 +2,17 @@ import { create } from "zustand";
 
 interface CartState {
   cartItems: string[];
+  isCartOpen: boolean;
   addToCart: (id: string) => void;
   removeFromCart: (id: string) => void;
   clearCart: () => void;
   initializeCart: (items: string[]) => void;
+  setCartOpen: (open: boolean) => void; // New function to handle both open/close
 }
 
 const useCartStore = create<CartState>((set) => ({
   cartItems: [],
+  isCartOpen: false,
   addToCart: (id) =>
     set((state) => {
       if (!state.cartItems.includes(id)) {
@@ -30,6 +33,7 @@ const useCartStore = create<CartState>((set) => ({
     set({ cartItems: [] });
   },
   initializeCart: (items) => set({ cartItems: items }),
+  setCartOpen: (open) => set({ isCartOpen: open }),
 }));
 
 export default useCartStore;

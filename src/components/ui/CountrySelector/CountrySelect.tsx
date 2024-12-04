@@ -20,7 +20,6 @@ import {
 import { cn } from "@/lib/utils";
 
 import { FlagImage } from "react-international-phone";
-import { fetchCountries } from "./getCountiresApi";
 
 interface CountrySelectProps {
   control: any;
@@ -52,9 +51,15 @@ export const CountrySelect: React.FC<CountrySelectProps> = ({
   useEffect(() => {
     const loadCountries = async () => {
       try {
-        const fetchedCountries = await fetchCountries();
+        const response = await fetch("/api/supported-countries", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+        const data = await response.json();
         setCountries(
-          fetchedCountries.map((country: { title: string; value: string }) => ({
+          data.countries.map((country: { title: string; value: string }) => ({
             name: country.title,
             code: country.value,
           }))
@@ -130,7 +135,7 @@ export const CountrySelect: React.FC<CountrySelectProps> = ({
                   placeholder="Search country..."
                   onValueChange={(value) => {
                     setSearchTerm(value);
-                    
+
                     if (value === "") {
                       field.onChange("");
                     }

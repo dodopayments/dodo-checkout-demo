@@ -49,7 +49,7 @@ export default function AccountPage() {
       setError(null);
       setIsLoading(true);
 
-      const response = await fetch("/api/get-database");
+      const response = await fetch("/api/database/get");
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);

@@ -3,12 +3,28 @@ import useCartStore from "@/lib/store/cart";
 import Image from "next/image";
 import { Button } from "../ui/button";
 import { ITEMS_LIST } from "../../constants/Items";
+import { toast } from "@/hooks/use-toast";
+import { ToastAction } from "../ui/toast";
 
 const NewLaunched = () => {
   const items = ITEMS_LIST;
   const id = items[0].id;
-  const { addToCart, cartItems } = useCartStore();
+  const { addToCart, cartItems, setCartOpen } = useCartStore();
   const isInCart = cartItems.includes(id);
+
+  const handleAddItem = () => {
+    addToCart(id);
+    toast({
+      title: "Item Added",
+      description: "You can view your cart to complete the purchase.",
+      action: (
+        <ToastAction onClick={() => setCartOpen(true)} altText="Go to cart">
+          Go to cart
+        </ToastAction>
+      ),
+    });
+  };
+
   return (
     <div className="w-full h-fit flex flex-col my-5 lg:my-12 rounded-3xl lg:rounded-[64px] bg-black relative overflow-hidden">
       <div className="absolute text-sm lg:text-2xl top-10 lg:top-52 -left-[52px] lg:-left-[72px] rounded-b-xl z-30 bg-[#232321] w-fit h-fit -rotate-90 font-semibold p-3 py-4 text-white transform">
@@ -35,7 +51,7 @@ const NewLaunched = () => {
           </p>
 
           <Button
-            onClick={() => addToCart(id)}
+            onClick={handleAddItem}
             disabled={isInCart}
             className={`py-2  bg-[#8B0000] hover:bg-[#A00000] ${
               isInCart ? "bg-red-400" : ""

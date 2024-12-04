@@ -9,10 +9,10 @@ const config: Config = {
   ],
   theme: {
   	extend: {
-		fontFamily: {
-			display: ["var(--font-instrument-serif)"],
-			body: ["var(--font-satoshi)"],
-		  },
+  		fontFamily: {
+  			display: ["var(--font-instrument-serif)"],
+  			body: ["var(--font-satoshi)"]
+  		},
   		colors: {
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',

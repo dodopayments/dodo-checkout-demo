@@ -5,6 +5,7 @@ import { Button } from "../ui/button";
 import useCartStore from "@/lib/store/cart";
 import { ITEMS_LIST } from "@/constants/Items";
 import { toast } from "@/hooks/use-toast";
+import { ToastAction } from "../ui/toast";
 
 interface ItemProps {
   id: string;
@@ -23,7 +24,7 @@ const Item: React.FC<ItemProps> = ({
   price,
   discount,
 }) => {
-  const { cartItems, addToCart, initializeCart } = useCartStore();
+  const { cartItems, addToCart, initializeCart, setCartOpen } = useCartStore();
 
   useEffect(() => {
     const storedItems = localStorage.getItem("cartItems");
@@ -33,6 +34,19 @@ const Item: React.FC<ItemProps> = ({
   }, [initializeCart]);
 
   const isInCart = cartItems.includes(id);
+
+  const handleAddItem = () => {
+    addToCart(id);
+    toast({
+      title: "Item Added",
+      description: "You can view your cart to complete the purchase.",
+      action: (
+        <ToastAction onClick={() => setCartOpen(true)} altText="Go to cart">
+          Go to cart
+        </ToastAction>
+      ),
+    });
+  };
 
   return (
     <div className="w-fit h-fit gap-1 flex flex-col">
@@ -57,13 +71,7 @@ const Item: React.FC<ItemProps> = ({
         <div className="text-[#232321] pl-1 font-semibold">{price}</div>
       )}
       <Button
-        onClick={() => {
-          addToCart(id);
-            toast({
-            title: "Item Added",
-            description: "You can view your cart to complete the purchase.",
-            });
-        }}
+        onClick={handleAddItem}
         disabled={isInCart}
         className={`py-2 ${isInCart ? "bg-neutral-800" : ""}`}
       >

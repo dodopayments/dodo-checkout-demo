@@ -7,7 +7,7 @@ import { handleOneTimePayment, handleSubscription } from "@/lib/api-functions";
 const webhook = new Webhook(process.env.NEXT_PUBLIC_DODO_WEBHOOK_KEY!);
 
 export async function POST(request: Request) {
-  const headersList = headers();
+  const headersList = await headers();
 
   try {
     const rawBody = await request.text();

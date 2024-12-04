@@ -61,7 +61,7 @@ const CustomerPaymentForm = () => {
 
   const createPaymentLink = async (formData: typeof formSchema._type) => {
     try {
-      const response = await fetch("/api/create-payment-link", {
+      const response = await fetch("/api/payments/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

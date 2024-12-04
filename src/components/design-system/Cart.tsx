@@ -66,7 +66,7 @@ const CartItem = ({ id, title, price, discount, imageSrc }: CartItemProps) => {
 };
 
 export function Cart() {
-  const { cartItems } = useCartStore();
+  const { cartItems, isCartOpen, setCartOpen } = useCartStore();
 
   const cartItemsDetails = cartItems
     .map((id) => ITEMS_LIST.find((item) => item.id === id))
@@ -80,8 +80,11 @@ export function Cart() {
   }, 0);
 
   return (
-    <Sheet>
-      <SheetTrigger className="relative">
+    <Sheet 
+    open={isCartOpen} 
+    onOpenChange={setCartOpen}
+  >
+    <SheetTrigger className="relative" onClick={() => setCartOpen(true)}>
         <Basket size={24} weight="fill" />
         {cartItems.length > 0 && (
           <span className="absolute -top-2 -right-2 bg-[#8B0000] text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">

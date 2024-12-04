@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-
 import { SubscriptionDetails } from "@/types/api-types";
 import { DatabaseService } from "@/lib/db";
 import { auth } from "@/auth";

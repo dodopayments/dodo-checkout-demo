@@ -37,7 +37,7 @@ const SubscriptionCard = memo(({ plan, data, onCancelled }: SubscriptionCardProp
   const handleCancellation = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('/api/cancel-subscription', {
+      const response = await fetch('/api/payments/cancel', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

@@ -9,7 +9,7 @@ Check out this app live at [atlas.dodopayments.com](https://atlas.dodopayments.c
 ## Documentation
 
 Refer to the documentation for a more detailed walkthrough of the project:
-[Link](https://docs.dodopayments.com)
+[Link](https://docs.dodopayments.com/api-reference/integration-guide)
 
 ## Features
 

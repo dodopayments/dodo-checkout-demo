@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { updateSubscriptionInDatabase } from "@/lib/api-functions";
+import { dodopayments } from "@/lib/utils";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
@@ -8,35 +9,14 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const email = session?.user?.email;
     const subscriptionId = body.subscriptionId;
-   
-    // Step 1: Cancel subscription via API
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_DODO_TEST_API}/subscriptions/${subscriptionId}`,
-      {
-        method: "PATCH",
-        headers: {  
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.NEXT_PUBLIC_DODO_API_KEY}`,
-        },
-        body: JSON.stringify({
-          status: "cancelled",
-        }),
-      }
-    );
 
-    if (!response.ok) {
-      return NextResponse.json(
-        {
-          error: "Failed to cancel subscription",
-          details: await response.text(),
-        },
-        { status: response.status }
-      );
-    }
+    const response = await dodopayments.subscriptions.update(subscriptionId, {
+      status: "cancelled"
+    })
 
     // Step 2: Update database
     const result = await updateSubscriptionInDatabase(email!, subscriptionId);
-    
+
     if (!result.success) {
       return NextResponse.json(
         { error: result.error?.message },

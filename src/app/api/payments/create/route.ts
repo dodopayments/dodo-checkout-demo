@@ -1,5 +1,5 @@
-// app/api/payments/route.ts
-
+import { dodopayments } from "@/lib/utils";
+import { CountryCode } from "dodopayments/resources/misc/supported-countries.mjs";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -25,46 +25,31 @@ export async function POST(request: NextRequest) {
     // Validate request body
     const { formData, cartItems } = paymentRequestSchema.parse(body);
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_DODO_TEST_API}/payments`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.NEXT_PUBLIC_DODO_API_KEY}`,
+    const response = await dodopayments.payments.create({
+      billing: {
+        city: formData.city,
+        country: formData.country as CountryCode ,
+        state: formData.state,
+        street: formData.addressLine,
+        zipcode: parseInt(formData.zipCode),
       },
-      body: JSON.stringify({
-        billing: {
-          city: formData.city,
-          country: formData.country,
-          state: formData.state,
-          street: formData.addressLine,
-          zipcode: parseInt(formData.zipCode),
-        },
-        customer: {
-          email: formData.email,
-          name: `${formData.firstName} ${formData.lastName}`,
-          phone_number: formData.phoneNumber || undefined,
-        },
-        payment_link: true,
-        product_cart: cartItems.map((id) => ({
-          product_id: id,
-          quantity: 1,
-        })),
-        return_url: process.env.NEXT_PUBLIC_RETURN_URL,
-      }),
-    });
+      customer: {
+        email: formData.email,
+        name: `${formData.firstName} ${formData.lastName}`,
+        phone_number: formData.phoneNumber || undefined,
+      },
+      payment_link: true,
+      product_cart: cartItems.map((id) => ({
+        product_id: id,
+        quantity: 1,
+      })),
+      return_url: process.env.NEXT_PUBLIC_RETURN_URL,
+    })
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => null);
-      return NextResponse.json(
-        { error: "Payment link creation failed", details: errorData },
-        { status: response.status }
-      );
-    }
-
-    const data = await response.json();
-    return NextResponse.json({ paymentLink: data.payment_link });
+    return NextResponse.json({ paymentLink: response.payment_link });
+    
   } catch (err) {
-    console.error("Payment error:", err);
+    console.error("Payment link creation failed", err);
     return NextResponse.json(
       {
         error: err instanceof Error ? err.message : "An unknown error occurred",

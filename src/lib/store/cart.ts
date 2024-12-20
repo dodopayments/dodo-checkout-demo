@@ -7,7 +7,7 @@ interface CartState {
   removeFromCart: (id: string) => void;
   clearCart: () => void;
   initializeCart: (items: string[]) => void;
-  setCartOpen: (open: boolean) => void; // New function to handle both open/close
+  setCartOpen: (open: boolean) => void; 
 }
 
 const useCartStore = create<CartState>((set) => ({

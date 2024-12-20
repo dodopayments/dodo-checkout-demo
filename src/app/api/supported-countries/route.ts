@@ -1,5 +1,8 @@
 import { COUNTRIES } from "@/components/ui/CountrySelector/countries";
+import { dodopayments } from "@/lib/utils";
 import { NextResponse } from "next/server";
+
+
 
 function getMatchedCountries(
   countryValues: string[],
@@ -13,22 +16,13 @@ function getMatchedCountries(
   }, [] as { title: string; value: string }[]);
 }
 
+
+
 export async function GET() {
   try {
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_DODO_TEST_API}/checkout/supported_countries`,
-      {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+    const response = await dodopayments.misc.supportedCountries.list()
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    const matchedCountries = getMatchedCountries(data, COUNTRIES);
+    const matchedCountries = getMatchedCountries(response, COUNTRIES);
     return NextResponse.json({ countries: matchedCountries });
 
   } catch (error) {

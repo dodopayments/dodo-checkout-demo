@@ -29,3 +29,11 @@ export interface UpdateSubscriptionResult {
     status: number;
   };
 }
+
+export interface DatabaseSchema {
+  id: string;
+  email: string;
+  product_ids: string[];
+  subscription_ids: string[];
+  updated_at: Date;
+}

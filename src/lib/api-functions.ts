@@ -13,12 +13,17 @@ export async function handleSubscription(
     throw fetchError;
   }
 
-  const subscriptionDetail = {
-    activated_at: new Date().toISOString(),
-    payment_frequency_interval: payload.data.payment_frequency_interval!,
-    product_id: payload.data.product_id!,
-    subscription_id: payload.data.subscription_id!,
-  };
+  let subscriptionDetail;
+  if ("payment_frequency_interval" in payload.data) {
+    subscriptionDetail = {
+      activated_at: new Date().toISOString(),
+      payment_frequency_interval: payload.data.payment_frequency_interval,
+      product_id: payload.data.product_id!,
+      subscription_id: payload.data.subscription_id!,
+    };
+  } else {
+    throw new Error("Invalid payload data for subscription");
+  }
 
   if (existingRecord) {
     const updatedSubscriptions = [
@@ -48,9 +53,12 @@ export async function handleOneTimePayment(
     throw fetchError;
   }
 
-  const productIds = payload.data.product_cart!.map(
-    (product) => product.product_id
-  );
+  let productIds: string[] = [];
+  if ("product_cart" in payload.data && payload.data.product_cart) {
+    productIds = payload.data.product_cart.map((product) => product.product_id);
+  } else {
+    throw new Error("Invalid payload data for one-time payment");
+  }
 
   if (existingRecord) {
     const updatedProducts = [
@@ -68,7 +76,6 @@ export async function handleOneTimePayment(
     });
   }
 }
-
 
 export async function updateSubscriptionInDatabase(
   email: string,

@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { updateSubscriptionInDatabase } from "@/lib/api-functions";
-import { dodopayments } from "@/lib/utils";
+import { dodopayments } from "@/lib/dodopayments";
+
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {

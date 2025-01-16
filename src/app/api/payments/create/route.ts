@@ -1,4 +1,5 @@
-import { dodopayments } from "@/lib/utils";
+
+import { dodopayments } from "@/lib/dodopayments";
 import { CountryCode } from "dodopayments/resources/misc/supported-countries.mjs";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";

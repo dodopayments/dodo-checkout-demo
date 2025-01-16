@@ -1,5 +1,5 @@
 import { COUNTRIES } from "@/components/ui/CountrySelector/countries";
-import { dodopayments } from "@/lib/utils";
+import { dodopayments } from "@/lib/dodopayments";
 import { NextResponse } from "next/server";
 
 

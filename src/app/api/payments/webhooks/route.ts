@@ -41,9 +41,6 @@ export async function POST(request: Request) {
           await handleSubscription(email, payload);
           break;
 
-        case "pending":
-          break;
-
         default:
           await updateSubscriptionInDatabase(
             email,

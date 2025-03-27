@@ -12,37 +12,30 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { PhoneInput } from "react-international-phone";
 import { CountrySelect } from "../ui/CountrySelector/CountrySelect";
-import "react-international-phone/style.css";
 import useCartStore from "@/lib/store/cart";
-import { useToast } from "@/hooks/use-toast";
 
 const formSchema = z.object({
-  firstName: z.string().min(2, "First name must be at least 2 characters"),
-  lastName: z.string().min(2, "Last name must be at least 2 characters"),
+  firstName: z.string().min(1, "First name must be at least 2 characters"),
+  lastName: z.string().min(1, "Last name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
   country: z.string().min(2, "Country must be at least 2 characters"),
-  addressLine: z.string().min(5, "Address must be at least 5 characters"),
+  addressLine: z.string().min(1, "Address must be at least 5 characters"),
   city: z.string().min(2, "City must be at least 2 characters"),
-  zipCode: z.string().min(5, "Zip code must be at least 5 characters"),
-  phoneNumber: z.string().optional(),
-  state: z.string().min(2, "State must be at least 2 characters"),
+  zipCode: z.string().min(1, "Zip code must be at least 5 characters"),
+  state: z.string().min(1, "State must be at least 2 characters"),
 });
 
 const CustomerPaymentForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const { toast } = useToast();
   const cartItems = useCartStore((state) => state.cartItems);
-  const [phoneInputMeta, setPhoneInputMeta] = useState<{
-    country: any;
-    inputValue: string;
-  } | null>(null);
+
 
   const {
     control,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(formSchema),
@@ -55,11 +48,13 @@ const CustomerPaymentForm = () => {
       city: "",
       state: "",
       zipCode: "",
-      phoneNumber: "",
     },
   });
 
-  const createPaymentLink = async (formData: typeof formSchema._type) => {
+  const createPaymentLink = async (
+    formData: typeof formSchema._type,
+    setIsLoading: (isLoading: boolean) => void
+  ) => {
     try {
       const response = await fetch("/api/payments/create", {
         method: "POST",
@@ -85,35 +80,34 @@ const CustomerPaymentForm = () => {
         setError("An unknown error occurred");
       }
       console.error("Payment error:", err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const onSubmit = async (data: typeof formSchema._type) => {
+  const onSubmit = async (data: z.infer<typeof formSchema>) => {
     setIsLoading(true);
     setError("");
-    if (data.phoneNumber) {
-      const phoneValue = phoneInputMeta?.inputValue || "";
-      const hasOnlyCountryCode =
-        phoneValue.trim() === `+${phoneInputMeta?.country.dialCode}`;
-
-      if (hasOnlyCountryCode) {
-        delete data.phoneNumber;
-      } else if (phoneValue.length < phoneInputMeta?.country.format.length) {
-        toast({
-          title: "Error",
-          description: "Please enter a complete phone number",
-        });
-        return;
-      }
-    }
+   
     if (cartItems.length === 0) {
       setError("Your cart is empty");
       setIsLoading(false);
       return;
     }
 
-    await createPaymentLink(data);
+    await createPaymentLink(data, setIsLoading);
     setIsLoading(false);
+  };
+
+  const handlePrefill = () => {
+    setValue("firstName", "John");
+    setValue("lastName", "Doe");
+    setValue("email", "john.doe@example.com");
+    setValue("country", "US");
+    setValue("addressLine", "364 Kent St");
+    setValue("city", "Sydney");
+    setValue("state", "NSW");
+    setValue("zipCode", "2035");
   };
 
   return (
@@ -276,38 +270,16 @@ const CustomerPaymentForm = () => {
               />
             </div>
 
-            <Controller
-              name="phoneNumber"
-              control={control}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Phone Number (optional)</FormLabel>
-                  <FormControl>
-                    <PhoneInput
-                      value={field.value}
-                      onChange={(phone, meta) => {
-                        field.onChange(phone);
-                        setPhoneInputMeta(meta);
-                      }}
-                      defaultCountry="us"
-                      countrySelectorStyleProps={{
-                        buttonClassName:
-                          "border border-input px-2 bg-background hover:bg-accent",
-                      }}
-                      inputProps={{
-                        className:
-                          "flex h-9 w-full rounded-r-md border border-input bg-background px-3 py-2 text-sm",
-                      }}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
+          </div>
+          <div className="flex items-center justify-center gap-4">
+            <Button type="button" className="w-fit" variant={"secondary"} onClick={handlePrefill}>
+              Prefill with demo details
+            </Button>
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? "Processing..." : "Continue to Payment"}
+            </Button>
           </div>
 
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? "Processing..." : "Continue to Payment"}
-          </Button>
         </form>
       </Form>
     </div>

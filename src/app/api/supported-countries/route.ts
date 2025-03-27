@@ -20,7 +20,7 @@ function getMatchedCountries(
 
 export async function GET() {
   try {
-    const response = await dodopayments.misc.supportedCountries.list()
+    const response = await dodopayments.misc.listSupportedCountries()
 
     const matchedCountries = getMatchedCountries(response, COUNTRIES);
     return NextResponse.json({ countries: matchedCountries });

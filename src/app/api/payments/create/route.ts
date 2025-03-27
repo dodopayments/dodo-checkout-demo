@@ -1,6 +1,6 @@
 
 import { dodopayments } from "@/lib/dodopayments";
-import { CountryCode } from "dodopayments/resources/misc/supported-countries.mjs";
+import { CountryCode } from "dodopayments/resources/misc.mjs";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -14,7 +14,6 @@ const paymentRequestSchema = z.object({
     email: z.string().email(),
     firstName: z.string(),
     lastName: z.string(),
-    phoneNumber: z.string().optional(),
   }),
   cartItems: z.array(z.string()),
 });
@@ -32,12 +31,11 @@ export async function POST(request: NextRequest) {
         country: formData.country as CountryCode ,
         state: formData.state,
         street: formData.addressLine,
-        zipcode: parseInt(formData.zipCode),
+        zipcode: (formData.zipCode),
       },
       customer: {
         email: formData.email,
         name: `${formData.firstName} ${formData.lastName}`,
-        phone_number: formData.phoneNumber || undefined,
       },
       payment_link: true,
       product_cart: cartItems.map((id) => ({

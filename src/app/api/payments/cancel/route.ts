@@ -12,7 +12,8 @@ export async function POST(req: NextRequest) {
     const subscriptionId = body.subscriptionId;
 
     const response = await dodopayments.subscriptions.update(subscriptionId, {
-      status: "cancelled"
+      status: "cancelled",
+      metadata: {} // metadata can be sent here 
     })
     console.log(response)
     // Step 2: Update database

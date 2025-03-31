@@ -1,6 +1,6 @@
 # Dodo Payment Integration (Next.js)
 
-This project demonstrates a comprehensive Dodo payment integration solution using Next.js. It includes payment link creation, webhook updates, and merchant database updates, all built with TypeScript and Next.js. Follow the steps in the documentation below to quickly set up and start using the Dodo payment features in your application.
+This project demonstrates a comprehensive [Dodo Payments](https://dodopayments.com) integration solution using Next.js. It includes payment link creation, webhook updates, and merchant database updates, all built with TypeScript and Next.js. Follow the steps in the documentation below to quickly set up and start using the Dodo payment features in your application.
 
 ## Live Demo
 

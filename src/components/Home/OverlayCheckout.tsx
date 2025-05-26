@@ -38,25 +38,7 @@ function OverlayCheckout() {
         setMessage("Redirecting to payment page");
         break;
 
-      case "checkout.payment_created":
-        setCheckoutState({ status: "loading" });
-        setMessage("Payment started");
-        break;
-      case "checkout.payment_succeeded":
-        setCheckoutState({ status: "idle" });
-        console.log("Payment event successful");
-        setMessage("Payment successful");
-        break;
-
-      case "checkout.payment_failed":
-        setCheckoutState({
-          status: "error",
-          error: (event.data?.message as string) || "Payment failed",
-        });
-        setMessage("Payment failed");
-        break;
-
-      case "error":
+      case "checkout.error":
         setCheckoutState({
           status: "error",
           error: (event.data?.message as string) || "An error occurred",

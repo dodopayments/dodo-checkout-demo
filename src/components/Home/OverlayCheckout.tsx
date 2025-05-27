@@ -53,7 +53,7 @@ function OverlayCheckout() {
       displayType: "overlay",
       linkType: "static",
       mode: "test",
-      theme: "light",
+      theme: "dark",
       onEvent: (event: CheckoutEvent) => {
         ListinEvents(event);
       },

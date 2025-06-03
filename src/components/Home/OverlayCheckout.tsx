@@ -150,9 +150,6 @@ function OverlayCheckout() {
                 {message}
               </div>
             )}
-            <p className="text-xs text-slate-500 mt-4">
-              Disclaimer: Overlay is checkout is in beta
-            </p>
           </div>
         </div>
       </div>

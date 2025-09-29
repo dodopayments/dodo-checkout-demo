@@ -271,8 +271,8 @@ const CustomerPaymentForm = () => {
             </div>
 
           </div>
-          <div className="flex items-center justify-center gap-4">
-            <Button type="button" className="w-fit" variant={"secondary"} onClick={handlePrefill}>
+          <div className="flex flex-col md:flex-row items-center justify-center gap-4">
+            <Button type="button" className="w-full md:w-fit" variant={"secondary"} onClick={handlePrefill}>
               Prefill with demo details
             </Button>
             <Button type="submit" className="w-full" disabled={isLoading}>

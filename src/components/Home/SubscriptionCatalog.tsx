@@ -28,11 +28,13 @@ const SubscriptionItem: React.FC<SubscriptionItemProps> = ({
   const { subscriptionItems, addToCart, initializeCart, setCartOpen } = useCartStore();
 
   useEffect(() => {
+    const storedOneTimeItems = localStorage.getItem("oneTimeItems");
     const storedSubscriptionItems = localStorage.getItem("subscriptionItems");
     initializeCart(
-      [],
+      storedOneTimeItems ? JSON.parse(storedOneTimeItems) : [],
       storedSubscriptionItems ? JSON.parse(storedSubscriptionItems) : []
     );
+  }, [initializeCart]);
   }, [initializeCart]);
 
   const isInCart = subscriptionItems.includes(id);

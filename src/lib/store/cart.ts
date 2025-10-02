@@ -1,39 +1,63 @@
 import { create } from "zustand";
 
 interface CartState {
-  cartItems: string[];
+  oneTimeItems: string[];
+  subscriptionItems: string[];
   isCartOpen: boolean;
-  addToCart: (id: string) => void;
-  removeFromCart: (id: string) => void;
+  addToCart: (id: string, isSubscription?: boolean) => void;
+  removeFromCart: (id: string, isSubscription?: boolean) => void;
   clearCart: () => void;
-  initializeCart: (items: string[]) => void;
-  setCartOpen: (open: boolean) => void; 
+  initializeCart: (oneTimeItems: string[], subscriptionItems: string[]) => void;
+  setCartOpen: (open: boolean) => void;
+  getCartItems: () => { oneTimeItems: string[]; subscriptionItems: string[] };
 }
 
-const useCartStore = create<CartState>((set) => ({
-  cartItems: [],
+const useCartStore = create<CartState>((set, get) => ({
+  oneTimeItems: [],
+  subscriptionItems: [],
   isCartOpen: false,
-  addToCart: (id) =>
+  addToCart: (id, isSubscription = false) =>
     set((state) => {
-      if (!state.cartItems.includes(id)) {
-        const newCartItems = [...state.cartItems, id];
-        localStorage.setItem("cartItems", JSON.stringify(newCartItems));
-        return { cartItems: newCartItems };
+      if (isSubscription) {
+        // Only allow one subscription in cart at a time
+        const newSubscriptionItems = [id];
+        localStorage.setItem("subscriptionItems", JSON.stringify(newSubscriptionItems));
+        return { subscriptionItems: newSubscriptionItems, oneTimeItems: [] };
+      } else {
+        if (!state.oneTimeItems.includes(id)) {
+          const newOneTimeItems = [...state.oneTimeItems, id];
+          localStorage.setItem("oneTimeItems", JSON.stringify(newOneTimeItems));
+          return { oneTimeItems: newOneTimeItems };
+        }
       }
       return state;
     }),
-  removeFromCart: (id) =>
+  removeFromCart: (id, isSubscription = false) =>
     set((state) => {
-      const newCartItems = state.cartItems.filter((itemId) => itemId !== id);
-      localStorage.setItem("cartItems", JSON.stringify(newCartItems));
-      return { cartItems: newCartItems };
+      if (isSubscription) {
+        const newSubscriptionItems = state.subscriptionItems.filter((itemId) => itemId !== id);
+        localStorage.setItem("subscriptionItems", JSON.stringify(newSubscriptionItems));
+        return { subscriptionItems: newSubscriptionItems };
+      } else {
+        const newOneTimeItems = state.oneTimeItems.filter((itemId) => itemId !== id);
+        localStorage.setItem("oneTimeItems", JSON.stringify(newOneTimeItems));
+        return { oneTimeItems: newOneTimeItems };
+      }
     }),
   clearCart: () => {
-    localStorage.removeItem("cartItems");
-    set({ cartItems: [] });
+    localStorage.removeItem("oneTimeItems");
+    localStorage.removeItem("subscriptionItems");
+    set({ oneTimeItems: [], subscriptionItems: [] });
   },
-  initializeCart: (items) => set({ cartItems: items }),
+  initializeCart: (oneTimeItems, subscriptionItems) => 
+    set({ oneTimeItems, subscriptionItems }),
   setCartOpen: (open) => set({ isCartOpen: open }),
+  getCartItems: () => {
+    return {
+      oneTimeItems: get().oneTimeItems,
+      subscriptionItems: get().subscriptionItems
+    };
+  },
 }));
 
 export default useCartStore;

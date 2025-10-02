@@ -1,8 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState } from "react";
-import { useForm, Controller } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -11,9 +8,12 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { CountrySelect } from "../ui/CountrySelector/CountrySelect";
 import useCartStore from "@/lib/store/cart";
+import { zodResolver } from "@hookform/resolvers/zod";
+import React, { useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import * as z from "zod";
+import { CountrySelect } from "../ui/CountrySelector/CountrySelect";
 
 const formSchema = z.object({
   firstName: z.string().min(1, "First name must be at least 2 characters"),
@@ -29,7 +29,8 @@ const formSchema = z.object({
 const CustomerPaymentForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const cartItems = useCartStore((state) => state.cartItems);
+  const oneTimeItems = useCartStore((state) => state.oneTimeItems);
+  const subscriptionItems = useCartStore((state) => state.subscriptionItems);
 
 
   const {
@@ -63,7 +64,8 @@ const CustomerPaymentForm = () => {
         },
         body: JSON.stringify({
           formData,
-          cartItems,
+          oneTimeItems,
+          subscriptionItems,
         }),
       });
 
@@ -89,7 +91,7 @@ const CustomerPaymentForm = () => {
     setIsLoading(true);
     setError("");
    
-    if (cartItems.length === 0) {
+    if (oneTimeItems.length === 0 && subscriptionItems.length === 0) {
       setError("Your cart is empty");
       setIsLoading(false);
       return;

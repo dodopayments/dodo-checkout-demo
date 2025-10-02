@@ -9,8 +9,8 @@ import { ToastAction } from "../ui/toast";
 const NewLaunched = () => {
   const items = ITEMS_LIST;
   const id = items[0].id;
-  const { addToCart, cartItems, setCartOpen } = useCartStore();
-  const isInCart = cartItems.includes(id);
+  const { addToCart, oneTimeItems, subscriptionItems, setCartOpen } = useCartStore();
+  const isInCart = oneTimeItems.includes(id) || subscriptionItems.includes(id);
 
   const handleAddItem = () => {
     addToCart(id);

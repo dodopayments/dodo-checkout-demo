@@ -5,16 +5,20 @@ import useCartStore from "@/lib/store/cart";
 import React, { useEffect } from "react";
 
 const Page = () => {
-  const { cartItems, initializeCart } = useCartStore();
+  const { oneTimeItems, subscriptionItems, initializeCart } = useCartStore();
 
   useEffect(() => {
-    const storedItems = localStorage.getItem("cartItems");
-    if (storedItems) {
-      initializeCart(JSON.parse(storedItems));
-    }
+    const storedOneTimeItems = localStorage.getItem("oneTimeItems");
+    const storedSubscriptionItems = localStorage.getItem("subscriptionItems");
+    initializeCart(
+      storedOneTimeItems ? JSON.parse(storedOneTimeItems) : [],
+      storedSubscriptionItems ? JSON.parse(storedSubscriptionItems) : []
+    );
   }, [initializeCart]);
 
-  if (cartItems.length === 0) {
+  const hasItems = oneTimeItems.length > 0 || subscriptionItems.length > 0;
+
+  if (!hasItems) {
     return (
       <div className="h-[60vh] flex items-center justify-center">
         <div className="text-center">

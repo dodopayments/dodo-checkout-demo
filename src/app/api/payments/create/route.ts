@@ -25,6 +25,14 @@ export async function POST(request: NextRequest) {
     // Validate request body
     const { formData, oneTimeItems, subscriptionItems } = paymentRequestSchema.parse(body);
 
+    // Validate subscription items: only one subscription allowed
+    if (subscriptionItems.length > 1) {
+      return NextResponse.json(
+        { error: "Only one subscription item is allowed per checkout" },
+        { status: 400 }
+      );
+    }
+
     // Handle mixed carts: include both subscription and one-time items
     // If there are subscription items, include the first one along with all one-time items
     // If no subscription items, just process one-time items

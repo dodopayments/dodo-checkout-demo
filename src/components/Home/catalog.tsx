@@ -1,9 +1,8 @@
 "use client";
-import { ITEMS_LIST, SUBSCRIPTION_PLANS } from "@/constants/Items";
+import { ITEMS_LIST } from "@/constants/Items";
 import { toast } from "@/hooks/use-toast";
 import useCartStore from "@/lib/store/cart";
 import Image from "next/image";
-import { useEffect } from "react";
 import { Button } from "../ui/button";
 import { ToastAction } from "../ui/toast";
 
@@ -30,22 +29,14 @@ const Item: React.FC<ItemProps> = ({
   interval,
   features,
 }) => {
-  const { oneTimeItems, subscriptionItems, addToCart, initializeCart, setCartOpen } = useCartStore();
-
-  useEffect(() => {
-    const storedOneTimeItems = localStorage.getItem("oneTimeItems");
-    const storedSubscriptionItems = localStorage.getItem("subscriptionItems");
-    initializeCart(
-      storedOneTimeItems ? JSON.parse(storedOneTimeItems) : [],
-      storedSubscriptionItems ? JSON.parse(storedSubscriptionItems) : []
-    );
-  }, [initializeCart]);
+  const { oneTimeItems, subscriptionItems, addToCart, setCartOpen } = useCartStore();
 
   const isInCart = isSubscription 
     ? subscriptionItems.includes(id)
     : oneTimeItems.includes(id);
 
   const handleAddItem = () => {
+    // Add both one-time products and subscriptions to cart
     addToCart(id, isSubscription);
     toast({
       title: isSubscription ? "Subscription Added" : "Item Added",
@@ -116,27 +107,6 @@ const Catalog = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12">
         {ITEMS_LIST.map((item) => (
           <Item key={item.id} {...item} isSubscription={false} />
-        ))}
-      </div>
-      
-      <div className="text-center my-12 text-[#232321] text-3xl lg:text-[55px] font-semibold uppercase">
-        <span className="text-[#870A0A] font-display  capitalize">
-          Subscription Plans
-        </span>
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-12">
-        {SUBSCRIPTION_PLANS.map((plan) => (
-          <Item 
-            key={plan.id} 
-            id={plan.id}
-            imageSrc={plan.image.src}
-            altText={`${plan.title} Subscription`}
-            title={plan.title}
-            price={`$${plan.price.toFixed(2)}`}
-            isSubscription={true}
-            interval={plan.interval}
-            features={plan.features}
-          />
         ))}
       </div>
     </div>

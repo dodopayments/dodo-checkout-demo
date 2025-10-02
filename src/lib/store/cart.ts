@@ -1,3 +1,4 @@
+import { SUBSCRIPTION_PLANS } from "@/constants/Items";
 import { create } from "zustand";
 
 interface CartState {
@@ -19,10 +20,31 @@ const useCartStore = create<CartState>((set, get) => ({
   addToCart: (id, isSubscription = false) =>
     set((state) => {
       if (isSubscription) {
-        // Only allow one subscription in cart at a time
-        const newSubscriptionItems = [id];
-        localStorage.setItem("subscriptionItems", JSON.stringify(newSubscriptionItems));
-        return { subscriptionItems: newSubscriptionItems, oneTimeItems: [] };
+        // Check if we're adding a different type of subscription
+        const existingSubscription = state.subscriptionItems[0];
+        if (existingSubscription) {
+          // Get the interval of the existing subscription
+          const existingPlan = SUBSCRIPTION_PLANS.find(plan => plan.id === existingSubscription);
+          const newPlan = SUBSCRIPTION_PLANS.find(plan => plan.id === id);
+          
+          // If they're different types (monthly vs yearly), replace the existing one
+          if (existingPlan && newPlan && existingPlan.interval !== newPlan.interval) {
+            const newSubscriptionItems = [id];
+            localStorage.setItem("subscriptionItems", JSON.stringify(newSubscriptionItems));
+            return { subscriptionItems: newSubscriptionItems };
+          }
+          // If they're the same type, don't add duplicates
+          if (!state.subscriptionItems.includes(id)) {
+            const newSubscriptionItems = [...state.subscriptionItems, id];
+            localStorage.setItem("subscriptionItems", JSON.stringify(newSubscriptionItems));
+            return { subscriptionItems: newSubscriptionItems };
+          }
+        } else {
+          // No existing subscription, add the new one
+          const newSubscriptionItems = [id];
+          localStorage.setItem("subscriptionItems", JSON.stringify(newSubscriptionItems));
+          return { subscriptionItems: newSubscriptionItems };
+        }
       } else {
         if (!state.oneTimeItems.includes(id)) {
           const newOneTimeItems = [...state.oneTimeItems, id];

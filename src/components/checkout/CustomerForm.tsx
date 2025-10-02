@@ -52,42 +52,7 @@ const CustomerPaymentForm = () => {
     },
   });
 
-  const createPaymentLink = async (
-    formData: typeof formSchema._type,
-    setIsLoading: (isLoading: boolean) => void
-  ) => {
-    try {
-      const response = await fetch("/api/payments/create", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          formData,
-          oneTimeItems,
-          subscriptionItems,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Payment link creation failed");
-      }
-
-      const data = await response.json();
-      window.location.href = data.paymentLink;
-    } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("An unknown error occurred");
-      }
-      console.error("Payment error:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const onSubmit = async (data: z.infer<typeof formSchema>) => {
+  const onSubmit = async () => {
     setIsLoading(true);
     setError("");
    
@@ -97,8 +62,23 @@ const CustomerPaymentForm = () => {
       return;
     }
 
-    await createPaymentLink(data, setIsLoading);
-    setIsLoading(false);
+    // Determine which item to use for payment initiation
+    let productId;
+    if (subscriptionItems.length > 0) {
+      // Use the first subscription item
+      productId = subscriptionItems[0];
+    } else if (oneTimeItems.length > 0) {
+      // Use the first one-time item
+      productId = oneTimeItems[0];
+    }
+
+    if (productId) {
+      // Redirect to Dodo Payments test URL with the product ID
+      window.location.href = `https://test.checkout.dodopayments.com/buy/${productId}?session=sess_AdVVj9EVbf`;
+    } else {
+      setError("No items found in cart");
+      setIsLoading(false);
+    }
   };
 
   const handlePrefill = () => {

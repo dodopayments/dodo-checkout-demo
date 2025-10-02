@@ -31,6 +31,7 @@ const Page = () => {
     );
   }
 
+  // Show the normal checkout flow for all items
   return (
     <div className="w-full px-3 lg:px-10 mt-10">
       <div className="flex flex-col lg:flex-row bg-white rounded-xl ">

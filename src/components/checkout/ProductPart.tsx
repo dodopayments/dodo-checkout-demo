@@ -174,6 +174,13 @@ const ProductPart = () => {
     return { subtotal, tax, total };
   }, [oneTimeItemsDetails, subscriptionItemsDetails]);
 
+  // Calculate total subscription amount
+  const totalSubscriptionAmount = useMemo(() => {
+    return subscriptionItemsDetails.reduce((sum: number, item: (typeof SUBSCRIPTION_PLANS)[0]) => {
+      return sum + item.price;
+    }, 0);
+  }, [subscriptionItemsDetails]);
+
   return (
     <section className="lg:h-screen lg:w-1/2 flex flex-col lg:overflow-hidden">
       <div className="flex-grow p-4 lg:p-8 overflow-auto">
@@ -224,8 +231,8 @@ const ProductPart = () => {
             <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
               <h3 className="font-medium text-blue-800 mb-2">Subscription Information</h3>
               <p className="text-sm text-blue-700">
-                You will be charged ${subscriptionItemsDetails[0].price.toFixed(2)} every {subscriptionItemsDetails[0].interval}.
-                This is a recurring charge that will continue until you cancel your subscription.
+                You will be charged ${totalSubscriptionAmount.toFixed(2)} for your subscription{subscriptionItemsDetails.length > 1 ? 's' : ''}.
+                This is a recurring charge that will continue until you cancel your subscription{subscriptionItemsDetails.length > 1 ? 's' : ''}.
               </p>
             </div>
           )}

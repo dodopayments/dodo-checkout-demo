@@ -35,7 +35,6 @@ const SubscriptionItem: React.FC<SubscriptionItemProps> = ({
       storedSubscriptionItems ? JSON.parse(storedSubscriptionItems) : []
     );
   }, [initializeCart]);
-  }, [initializeCart]);
 
   const isInCart = subscriptionItems.includes(id);
 

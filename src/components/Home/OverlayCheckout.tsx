@@ -27,6 +27,16 @@ function OverlayCheckout() {
         setMessage("Checkout opened");
         break;
 
+      case "checkout.payment_page_opened":
+        setCheckoutState({ status: "open" });
+        setMessage("Payment page opened");
+        break;
+
+      case "checkout.customer_details_submitted":
+        setCheckoutState({ status: "loading" });
+        setMessage("Customer details submitted");
+        break;
+
       case "checkout.closed":
         setCheckoutState({ status: "idle" });
         setMessage("Checkout closed");
@@ -50,27 +60,38 @@ function OverlayCheckout() {
 
   useEffect(() => {
     DodoPayments.Initialize({
-      displayType: "overlay",
-      linkType: "static",
       mode: "test",
-      theme: "dark",
       onEvent: (event: CheckoutEvent) => {
         ListinEvents(event);
       },
     });
   }, []);
 
-  const handleCheckout = useCallback(() => {
+  const handleCheckout = useCallback(async () => {
     try {
       setCheckoutState({ status: "loading" });
+      
+      // Create checkout session
+      const response = await fetch("/api/payments/session", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          productId: "pdt_QWovnGwqARBqUQQbmlEI7",
+          redirectUrl: `${window.location.origin}/payment-status`,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to create checkout session");
+      }
+
+      const { checkout_url } = await response.json();
+      
+      // Open checkout with the checkout URL
       DodoPayments.Checkout.open({
-        redirectUrl: `${window.location.origin}/payment-status`,
-        products: [
-          {
-            productId: "pdt_QWovnGwqARBqUQQbmlEI7",
-            quantity: 1,
-          },
-        ],
+        checkoutUrl: checkout_url,
       });
     } catch (error) {
       setCheckoutState({

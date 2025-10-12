@@ -63,35 +63,44 @@ const CustomerPaymentForm = () => {
         },
         body: JSON.stringify({
           formData,
-          cartItems,
-        }),
-      });
+          try {
+            const response = await fetch("/api/payments/create", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                formData,
+                cartItems,
+              }),
+            });
 
-      if (!response.ok) {
-        throw new Error("Payment link creation failed");
-      }
+            if (!response.ok) {
+              // Try to extract error message from response
+              let errorMsg = "Payment link creation failed";
+              try {
+                const errorData = await response.json();
+                if (errorData?.error) errorMsg = errorData.error;
+              } catch {}
+              setError(errorMsg);
+              throw new Error(errorMsg);
+            }
 
-      const data = await response.json();
-      window.location.href = data.paymentLink;
-    } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("An unknown error occurred");
-      }
-      console.error("Payment error:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const onSubmit = async (data: z.infer<typeof formSchema>) => {
-    setIsLoading(true);
-    setError("");
-   
-    if (cartItems.length === 0) {
-      setError("Your cart is empty");
-      setIsLoading(false);
+            const data = await response.json();
+            if (!data.paymentLink) {
+              setError("No payment link returned. Please try again.");
+              throw new Error("No payment link returned");
+            }
+            window.location.href = data.paymentLink;
+          } catch (err) {
+            setError(
+              err?.message ||
+              (typeof err === "string" ? err : "Payment link creation failed. Please try again.")
+            );
+            console.error("Payment link error:", err);
+          } finally {
+            setIsLoading(false);
+          }
       return;
     }
 

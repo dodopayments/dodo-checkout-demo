@@ -19,7 +19,6 @@ export async function POST(request: NextRequest) {
       product_cart: body.product_cart,
       // Always return back to pricing; hosted Checkout will append its own status or error
       return_url: body.return_url || `${appUrl}/pricing`,
-      allowed_payment_method_types: body.allowed_payment_method_types || ['credit', 'debit'],
       customer: body.customer ?? null,
       billing_address: body.billing_address ?? null,
       billing_currency: body.billing_currency ?? null,
@@ -40,6 +39,11 @@ export async function POST(request: NextRequest) {
       metadata: body.metadata ?? null,
       show_saved_payment_methods: body.show_saved_payment_methods ?? true,
       subscription_data: body.subscription_data ?? null,
+    }
+
+    // Only include allowed_payment_method_types if explicitly provided by caller
+    if (Array.isArray(body.allowed_payment_method_types)) {
+      payload.allowed_payment_method_types = body.allowed_payment_method_types
     }
 
     const response = await fetch('https://test.dodopayments.com/checkouts', {

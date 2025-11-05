@@ -180,15 +180,14 @@ export function ImageGeneratorExample() {
               {images.map((image) => (
                 <div
                   key={image.id}
-                  className="group relative overflow-hidden rounded-lg border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800"
+                  className="group relative h-64 overflow-hidden rounded-lg border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800"
                 >
                   <Image
                     src={image.url}
                     alt={image.prompt}
                     fill
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                    className="h-64 w-full object-cover"
-                    unoptimized
+                    className="object-cover"
                   />
                   <div className="p-3">
                     <p className="text-sm text-gray-600 line-clamp-2 dark:text-gray-400">

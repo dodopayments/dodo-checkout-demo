@@ -60,8 +60,8 @@ function SignInContent() {
   }
 
   return (
-    <div className="flex h-screen flex-col items-center justify-center">
-      <div className="mx-auto flex w-full max-w-md flex-col space-y-6 px-4">
+    <div className="min-h-screen flex flex-col items-center pt-40 sm:pt-48 md:pt-56 lg:pt-64 pb-10">
+      <div className="mx-auto mt-8 flex w-full max-w-md flex-col space-y-6 px-4">
         <div className="flex flex-col space-y-2 text-center">
           <h1 className="text-2xl font-semibold tracking-tight text-gray-900 dark:text-gray-50">
             Welcome back

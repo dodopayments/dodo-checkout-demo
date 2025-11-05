@@ -9,7 +9,7 @@ import clientPromise from '@/lib/mongo'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { email, paymentId, subscriptionId } = body
+    const { email, paymentId, subscriptionId, sessionId } = body
 
     if (!email) {
       return NextResponse.json(
@@ -108,8 +108,110 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // If checkout session ID provided, verify via Checkout Sessions API and map to payment/subscription
+    if (sessionId) {
+      const sessionResponse = await fetch(`https://test.dodopayments.com/checkouts/${sessionId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${bearerToken}`,
+          'Content-Type': 'application/json',
+        },
+      })
+
+      if (sessionResponse.ok) {
+        const session = await sessionResponse.json()
+        const metadata = session?.metadata || {}
+        // Prefer explicit fields if present
+        const status: string | undefined = session?.status
+        const customerEmail: string | undefined = session?.customer?.email || email
+        const discoveredPaymentId: string | undefined = session?.payment_id || session?.latest_payment_id
+        const discoveredSubscriptionId: string | undefined = session?.subscription_id
+
+        if (!customerEmail) {
+          return NextResponse.json({ success: false, message: 'Unable to determine customer email from session' })
+        }
+
+        // Determine type using existing helper rules
+        const inferredType = determinePaymentType(metadata, {
+          subscription_id: discoveredSubscriptionId,
+          subscription: session?.subscription_id ? { id: session.subscription_id } : undefined,
+        })
+
+        // Accept a wider set of success-like statuses
+        const successLike = new Set(['paid', 'succeeded', 'active', 'trialing', 'completed'])
+        if (status && successLike.has(status)) {
+          await updateUserPaymentStatus(
+            customerEmail,
+            inferredType,
+            discoveredPaymentId || discoveredSubscriptionId || sessionId,
+            metadata,
+            discoveredSubscriptionId,
+            status,
+            session?.customer_id || session?.customer?.id,
+          )
+
+          return NextResponse.json({ success: true, message: 'Session verified and user updated', paymentType: inferredType })
+        }
+
+        // Fallback: if payment_id exists, verify payment directly
+        if (discoveredPaymentId) {
+          const payResp = await fetch(`https://test.dodopayments.com/payments/${discoveredPaymentId}`, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${bearerToken}`,
+              'Content-Type': 'application/json',
+            },
+          })
+          if (payResp.ok) {
+            const pay = await payResp.json()
+            if (pay?.status === 'paid' || pay?.status === 'succeeded') {
+              await updateUserPaymentStatus(
+                customerEmail,
+                inferredType,
+                discoveredPaymentId,
+                pay?.metadata || metadata,
+                discoveredSubscriptionId,
+                pay?.status,
+                pay?.customer_id,
+              )
+              return NextResponse.json({ success: true, message: 'Payment verified and user updated', paymentType: inferredType })
+            }
+          }
+        }
+
+        // Fallback: if subscription_id exists, verify subscription directly
+        if (discoveredSubscriptionId) {
+          const subResp = await fetch(`https://test.dodopayments.com/subscriptions/${discoveredSubscriptionId}`, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${bearerToken}`,
+              'Content-Type': 'application/json',
+            },
+          })
+          if (subResp.ok) {
+            const sub = await subResp.json()
+            if (sub?.status === 'active' || sub?.status === 'trialing') {
+              await updateUserPaymentStatus(
+                customerEmail,
+                metadata.billing_type === 'usage_based' ? 'usage-based' : 'subscription',
+                sub?.payment_id || discoveredSubscriptionId,
+                sub?.metadata || metadata,
+                discoveredSubscriptionId,
+                sub?.status,
+                sub?.customer_id,
+              )
+              return NextResponse.json({ success: true, message: 'Subscription verified and user updated', paymentType: inferredType })
+            }
+          }
+        }
+
+        // Not successful yet
+        return NextResponse.json({ success: false, message: `Session not successful. status=${status || 'unknown'}`, session })
+      }
+    }
+
     return NextResponse.json(
-      { error: 'Payment ID or Subscription ID required' },
+      { error: 'Payment ID or Subscription ID or Session ID required' },
       { status: 400 }
     )
   } catch (error) {
@@ -125,7 +227,7 @@ type PaymentType = 'one-time' | 'subscription' | 'usage-based'
 
 type UserUpdateData = {
   payment: 'paid' | 'unpaid'
-  paymentType: PaymentType
+  paymentType?: PaymentType
   paymentDate: Date
   lastPaymentId: string
   paymentMetadata: Record<string, string>
@@ -150,11 +252,12 @@ async function updateUserPaymentStatus(
 
   const updateData: UserUpdateData = {
     payment: 'paid',
-    paymentType: paymentType,
     paymentDate: new Date(),
     lastPaymentId: paymentId,
     paymentMetadata: metadata,
   }
+
+  let creditsAdded: number | undefined
 
   if (subscriptionId) {
     updateData.subscriptionId = subscriptionId
@@ -165,30 +268,30 @@ async function updateUserPaymentStatus(
     updateData.customerId = customerId
   }
 
-  // If it's a one-time purchase (Credit Pack), add credits to the user's balance
-  if (paymentType === 'one-time') {
-    const creditsToAdd = 10 // Credit Pack gives 10 credits
-    
-    // Get current user to find existing credits
+  // Add credits only for explicit Credit Pack purchases
+  if (paymentType === 'one-time' && (metadata?.plan === 'Credit Pack' || typeof metadata?.credits !== 'undefined')) {
+    const creditsToAdd = Number(metadata?.credits ?? 10)
+
     const user = await usersCollection.findOne({ email })
     const currentCredits = user?.totalCredits || 0
-    
+
     updateData.totalCredits = currentCredits + creditsToAdd
+    creditsAdded = creditsToAdd
     console.log(`Adding ${creditsToAdd} credits. Previous: ${currentCredits}, New: ${currentCredits + creditsToAdd}`)
   }
 
   const result = await usersCollection.updateOne(
     { email },
-    { $set: updateData },
-    { upsert: false }
+    { $set: updateData, $setOnInsert: { email } },
+    { upsert: true }
   )
 
   console.log('User payment status updated:', {
     email,
-    paymentType,
     matched: result.matchedCount,
     modified: result.modifiedCount,
-    creditsAdded: paymentType === 'one-time' ? updateData.totalCredits : undefined,
+    creditsAdded,
+    totalCredits: updateData.totalCredits,
   })
 
   return result
@@ -199,6 +302,7 @@ function determinePaymentType(
   data: { subscription_id?: string; subscription?: unknown },
 ): PaymentType {
   if (metadata.billing_type === 'usage_based') return 'usage-based'
+  if (metadata.billing_type === 'subscription') return 'subscription'
   if (metadata.plan === 'Pay Per Image') return 'usage-based'
   if (metadata.plan === 'Credit Pack') return 'one-time'
   if (metadata.plan === 'Unlimited Pro') return 'subscription'

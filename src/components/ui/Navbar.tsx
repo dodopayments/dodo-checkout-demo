@@ -67,8 +67,8 @@ export function Navigation() {
               </a>
             </div>
           </nav>
-          <Button className="hidden h-10 font-semibold md:flex">
-            Start generating
+          <Button asChild className="hidden h-10 font-semibold md:flex">
+            <Link href={siteConfig.baseLinks.pricing}>Start generating</Link>
           </Button>
           <div className="flex gap-x-2 md:hidden">
             <Button>Start</Button>

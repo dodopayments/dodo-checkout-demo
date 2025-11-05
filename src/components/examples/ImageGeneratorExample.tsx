@@ -28,15 +28,17 @@ export function ImageGeneratorExample() {
   const [prompt, setPrompt] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
   const [images, setImages] = useState<GeneratedImage[]>([])
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
   
   // Initialize usage tracking hook
   const { trackUsage, isTracking, error } = useUsageTracking()
 
   const generateImage = async () => {
     if (!prompt.trim()) {
-      alert('Please enter a prompt')
+      setErrorMessage('Please enter a prompt')
       return
     }
+    setErrorMessage(null)
 
     setIsGenerating(true)
 
@@ -81,7 +83,7 @@ export function ImageGeneratorExample() {
       
     } catch (err) {
       console.error('Error generating image:', err)
-      alert('Failed to generate image. Please try again.')
+      setErrorMessage('Failed to generate image. Please try again.')
     } finally {
       setIsGenerating(false)
     }
@@ -98,10 +100,14 @@ export function ImageGeneratorExample() {
         </p>
 
         {/* Error Display */}
-        {error && (
+        {(error || errorMessage) && (
           <div className="mt-4 rounded-md bg-red-50 p-4 dark:bg-red-900/20">
             <p className="text-sm text-red-800 dark:text-red-400">
-              ⚠️ Usage tracking error: {error.message}
+              {errorMessage ? (
+                <>⚠️ {errorMessage}</>
+              ) : (
+                <>⚠️ Usage tracking error: {error!.message}</>
+              )}
             </p>
           </div>
         )}

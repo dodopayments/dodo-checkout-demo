@@ -21,7 +21,7 @@ import React, { Fragment } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { DodoPayments } from "dodopayments-checkout"
-import BillingAddressModal, { type BillingPayload } from "@/components/ui/BillingAddressModal"
+// Removed custom BillingAddressModal; unified Checkout Sessions will collect needed details
 
 type FixedPrice = string
 
@@ -254,10 +254,9 @@ export default function Pricing() {
   const [isLoading, setIsLoading] = React.useState<string | null>(null)
   const [showSuccess, setShowSuccess] = React.useState(false)
   const [showError, setShowError] = React.useState(false)
+  const [errorMessage, setErrorMessage] = React.useState<string | null>(null)
   const [useOverlayCheckout, setUseOverlayCheckout] = React.useState(true)
-  const [showBillingModal, setShowBillingModal] = React.useState(false)
-  const [billingInitial, setBillingInitial] = React.useState<Partial<BillingPayload> | undefined>(undefined)
-  const billingResolverRef = React.useRef<((payload: BillingPayload) => void) | null>(null)
+  // Billing modal no longer used; checkout session collects details
 
   // Load checkout preference from localStorage
   React.useEffect(() => {
@@ -273,35 +272,7 @@ export default function Pricing() {
     localStorage.setItem('checkout_preference', useOverlay ? 'overlay' : 'redirect')
   }
 
-  // Ensure billing + customer present; if not, open modal and await submission
-  const getOrCollectBilling = React.useCallback(async (): Promise<BillingPayload> => {
-    if (!session?.user?.email) throw new Error('Not authenticated')
-
-    // Try to load saved billing
-    try {
-      const res = await fetch(`/api/billing-address?email=${encodeURIComponent(session.user.email)}`)
-      if (res.ok) {
-        const data = await res.json()
-        const billing = data?.billingAddress
-        const customer = data?.customer || { email: session.user.email, name: session.user.name }
-        // Validate country: must be ISO alpha-2
-        const isValidCountry = typeof billing?.country === 'string' && /^[A-Za-z]{2}$/.test(billing.country)
-        if (billing?.address_line1 && billing?.city && isValidCountry && billing?.postal_code) {
-          return { billing: { ...billing, country: billing.country.toUpperCase() }, customer }
-        }
-        // Prefill but clear invalid country to force selection
-        setBillingInitial({ billing: billing ? { ...billing, country: '' } : undefined, customer })
-      }
-    } catch {
-      // ignore and fall back to modal
-    }
-
-    // Open modal and wait for user submission
-    return await new Promise<BillingPayload>((resolve) => {
-      billingResolverRef.current = resolve
-      setShowBillingModal(true)
-    })
-  }, [session?.user?.email, session?.user?.name])
+  // No-op: checkout collects billing/customer if not provided
 
   // Initialize Dodo Payments SDK
   React.useEffect(() => {
@@ -349,6 +320,41 @@ export default function Pricing() {
     })
   }, [router])
 
+  // After returning from hosted checkout, verify payment using stored session id
+  React.useEffect(() => {
+    const params = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '')
+    const hasError = params.has('error')
+    if (hasError) {
+      setShowError(true)
+      setTimeout(() => setShowError(false), 5000)
+    }
+
+    const sessionId = typeof window !== 'undefined' ? localStorage.getItem('pending_checkout_session_id') : null
+    if (session?.user?.email && sessionId) {
+      ;(async () => {
+        try {
+          const res = await fetch('/api/verify-payment', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: session.user!.email, sessionId }),
+          })
+          const data = await res.json()
+          if (res.ok && data?.success) {
+            setShowSuccess(true)
+            setTimeout(() => {
+              setShowSuccess(false)
+              router.push('/dashboard')
+            }, 2000)
+          }
+        } catch {
+          // ignore
+        } finally {
+          localStorage.removeItem('pending_checkout_session_id')
+        }
+      })()
+    }
+  }, [session?.user, router])
+
   const handleBuyCredits = async (planName: string) => {
     if (planName !== "Credit Pack") return
     
@@ -361,36 +367,15 @@ export default function Pricing() {
     setIsLoading(planName)
     
     try {
-      const details = await getOrCollectBilling()
-      // Persist to DB in case it came from modal
-      await fetch('/api/billing-address', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: session.user.email, billingAddress: details.billing, customer: details.customer }),
-      }).catch(() => {})
-
-      // Call API to create payment
-      const response = await fetch('/api/create-payment', {
+      // Create unified checkout session
+      const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          billing: {
-            address_line1: details.billing.address_line1,
-            address_line2: details.billing.address_line2,
-            city: details.billing.city,
-            state: details.billing.state,
-            postal_code: details.billing.postal_code,
-            country: (details.billing.country || '').toUpperCase(),
-            // Legacy keys for compatibility
-            street: details.billing.address_line1,
-            zipcode: details.billing.postal_code,
-          },
-          customer: {
-            email: details.customer.email,
-            name: details.customer.name || 'Customer',
-          },
+          // Let Checkout collect customer & billing details
+          customer: null,
           product_cart: [
             {
               product_id: 'pdt_NdPHjHDApTZcOc9zBObJg', // Replace with your actual product ID
@@ -401,35 +386,50 @@ export default function Pricing() {
             plan: 'Credit Pack',
             credits: '10',
           },
+          allowed_payment_method_types: ['credit', 'debit'],
+          confirm: false,
+          show_saved_payment_methods: false,
+          customization: { theme: 'system', show_order_details: true, show_on_demand_tag: true },
+          feature_flags: {
+            allow_currency_selection: true,
+            allow_discount_code: true,
+            allow_phone_number_collection: true,
+            allow_tax_id: true,
+            always_create_new_customer: true,
+          },
         }),
       })
 
       const data = await response.json()
 
-      if (data.success && data.payment_link) {
-        // Store payment ID for verification after redirect
-        if (data.payment_id) {
-          localStorage.setItem('pending_payment_id', data.payment_id)
+      if (data.success && data.checkout_url) {
+        // Store session for verification after redirect if needed
+        if (data.session_id) {
+          localStorage.setItem('pending_checkout_session_id', data.session_id)
         }
-        
+        const url = data.checkout_url
         // Use overlay or redirect based on user preference
         if (useOverlayCheckout) {
           DodoPayments.Checkout.open({
-            checkoutUrl: data.payment_link
+            checkoutUrl: url
           })
         } else {
           // Traditional redirect checkout
-          window.location.href = data.payment_link
+          window.location.href = url
         }
       } else {
-        console.error('Payment creation failed:', data)
-        const errorMessage = data.message || data.details?.message || data.error || 'Failed to create payment'
-        alert(`Payment Error: ${errorMessage}\n\nPlease check:\n1. Your DODO_PAYMENTS_API_KEY is set in .env.local\n2. The product ID is correct\n3. Check browser console for more details`)
+        console.error('Checkout session creation failed:', data)
+        const msg = data.message || data.details?.message || data.error || 'Failed to create checkout session'
+        setErrorMessage(`Checkout Error: ${msg}`)
+        setShowError(true)
+        setTimeout(() => setShowError(false), 5000)
         setIsLoading(null)
       }
     } catch (error) {
-      console.error('Error creating payment:', error)
-      alert('An error occurred. Please try again.')
+      console.error('Error creating checkout session:', error)
+      setErrorMessage('An error occurred. Please try again.')
+      setShowError(true)
+      setTimeout(() => setShowError(false), 5000)
       setIsLoading(null)
     }
   }
@@ -446,75 +446,71 @@ export default function Pricing() {
     setIsLoading(planName)
     
     try {
-      const details = await getOrCollectBilling()
-      await fetch('/api/billing-address', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: session.user.email, billingAddress: details.billing, customer: details.customer }),
-      }).catch(() => {})
-
-      // Call API to create subscription
-      const response = await fetch('/api/create-subscription', {
+      // Create unified checkout session for subscription
+      const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          billing: {
-            address_line1: details.billing.address_line1,
-            address_line2: details.billing.address_line2,
-            city: details.billing.city,
-            state: details.billing.state,
-            postal_code: details.billing.postal_code,
-            country: (details.billing.country || '').toUpperCase(),
-            street: details.billing.address_line1,
-            zipcode: details.billing.postal_code,
-          },
-          customer: {
-            email: details.customer.email,
-            name: details.customer.name || 'Customer',
-          },
-          product_id: billingFrequency === 'monthly' 
-            ? 'pdt_1F8PV7ODcdsDJlTQaKXKt' // Replace with your actual monthly product ID
-            : 'pdt_3qxV3furVGegjEoJf5GcN',  // Replace with your actual annual product ID
-          quantity: 1,
-          trial_period_days: 14, // Optional: 14-day free trial
+          // Let Checkout collect customer & billing details
+          customer: null,
+          product_cart: [
+            {
+              product_id: billingFrequency === 'monthly' 
+                ? 'pdt_1F8PV7ODcdsDJlTQaKXKt' // monthly subscription product
+                : 'pdt_3qxV3furVGegjEoJf5GcN', // annual subscription product
+              quantity: 1,
+            },
+          ],
+          subscription_data: { trial_period_days: 14 },
           metadata: {
             plan: 'Unlimited Pro',
             billing_frequency: billingFrequency,
+          },
+          allowed_payment_method_types: ['credit', 'debit'],
+          confirm: false,
+          show_saved_payment_methods: false,
+          customization: { theme: 'system', show_order_details: true, show_on_demand_tag: true },
+          feature_flags: {
+            allow_currency_selection: true,
+            allow_discount_code: true,
+            allow_phone_number_collection: true,
+            allow_tax_id: true,
+            always_create_new_customer: true,
           },
         }),
       })
 
       const data = await response.json()
 
-      if (data.success && data.payment_link) {
-        // Store subscription ID and payment ID for verification after redirect
-        if (data.subscription_id) {
-          localStorage.setItem('pending_subscription_id', data.subscription_id)
+      if (data.success && data.checkout_url) {
+        if (data.session_id) {
+          localStorage.setItem('pending_checkout_session_id', data.session_id)
         }
-        if (data.payment_id) {
-          localStorage.setItem('pending_payment_id', data.payment_id)
-        }
-        
+        const url = data.checkout_url
         // Use overlay or redirect based on user preference
         if (useOverlayCheckout) {
           DodoPayments.Checkout.open({
-            checkoutUrl: data.payment_link
+            checkoutUrl: url
           })
         } else {
           // Traditional redirect checkout
-          window.location.href = data.payment_link
+          window.location.href = url
         }
       } else {
-        console.error('Subscription creation failed:', data)
-        const errorMessage = data.message || data.details?.message || data.error || 'Failed to create subscription'
-        alert(`Subscription Error: ${errorMessage}\n\nPlease check:\n1. Your DODO_PAYMENTS_API_KEY is set in .env.local\n2. The product ID is correct\n3. Check browser console for more details`)
+        console.error('Checkout session (subscription) failed:', data)
+        const msg = data.message || data.details?.message || data.error || 'Failed to create subscription checkout session'
+        setErrorMessage(`Subscription Error: ${msg}`)
+        setShowError(true)
+        setTimeout(() => setShowError(false), 5000)
         setIsLoading(null)
       }
     } catch (error) {
-      console.error('Error creating subscription:', error)
-      alert('An error occurred. Please try again.')
+      console.error('Error creating subscription checkout session:', error)
+      setErrorMessage('An error occurred. Please try again.')
+      setShowError(true)
+      setTimeout(() => setShowError(false), 5000)
       setIsLoading(null)
     }
   }
@@ -531,70 +527,62 @@ export default function Pricing() {
     setIsLoading(planName)
     
     try {
-      const details = await getOrCollectBilling()
-      await fetch('/api/billing-address', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: session.user.email, billingAddress: details.billing, customer: details.customer }),
-      }).catch(() => {})
-
-      // Call API to create usage-based subscription
-      const response = await fetch('/api/create-usage-subscription', {
+      // Create unified checkout session for usage-based product
+      const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          billing: {
-            address_line1: details.billing.address_line1,
-            address_line2: details.billing.address_line2,
-            city: details.billing.city,
-            state: details.billing.state,
-            postal_code: details.billing.postal_code,
-            country: (details.billing.country || '').toUpperCase(),
-            street: details.billing.address_line1,
-            zipcode: details.billing.postal_code,
-          },
-          customer: {
-            email: details.customer.email,
-            name: details.customer.name || 'Customer',
-          },
-          product_id: 'pdt_xUvseunSwnTJL42kAZPau', // Replace with your usage-based product ID
-          quantity: 1,
+          // Let Checkout collect customer & billing details
+          customer: null,
+          product_cart: [
+            {
+              product_id: 'pdt_xUvseunSwnTJL42kAZPau', // usage-based product ID
+              quantity: 1,
+            },
+          ],
           metadata: {
             plan: 'Pay Per Image',
             billing_type: 'usage_based',
+          },
+          allowed_payment_method_types: ['credit', 'debit'],
+          confirm: false,
+          show_saved_payment_methods: false,
+          customization: { theme: 'system', show_order_details: true, show_on_demand_tag: true },
+          feature_flags: {
+            allow_currency_selection: true,
+            allow_discount_code: true,
+            allow_phone_number_collection: true,
+            allow_tax_id: true,
+            always_create_new_customer: true,
           },
         }),
       })
 
       const data = await response.json()
 
-      console.log('API Response:', { status: response.status, data })
+      console.log('Checkout Session API Response:', { status: response.status, data })
 
-      if (data.success && data.payment_link) {
-        // Store subscription ID and customer ID for verification after redirect
-        if (data.subscription_id) {
-          localStorage.setItem('pending_subscription_id', data.subscription_id)
+      if (data.success && data.checkout_url) {
+        if (data.session_id) {
+          localStorage.setItem('pending_checkout_session_id', data.session_id)
         }
-        if (data.payment_id) {
-          localStorage.setItem('pending_payment_id', data.payment_id)
-        }
-        
+        const url = data.checkout_url
         // Use overlay or redirect based on user preference
         if (useOverlayCheckout) {
           DodoPayments.Checkout.open({
-            checkoutUrl: data.payment_link
+            checkoutUrl: url
           })
         } else {
           // Traditional redirect checkout
-          window.location.href = data.payment_link
+          window.location.href = url
         }
       } else {
-        console.error('Usage-based subscription creation failed:', data)
+        console.error('Usage-based checkout session failed:', data)
         
         // Extract error message with better debugging
-        let errorMessage = 'Failed to create usage-based subscription'
+        let errorMessage = 'Failed to create usage-based checkout session'
         if (data.message) errorMessage = data.message
         else if (data.details?.message) errorMessage = data.details.message
         else if (data.error) errorMessage = data.error
@@ -603,32 +591,21 @@ export default function Pricing() {
         console.error('Extracted error message:', errorMessage)
         console.error('Full error data:', JSON.stringify(data, null, 2))
         
-        alert(`Usage-Based Billing Error: ${errorMessage}\n\nPlease check:\n1. Your DODO_PAYMENTS_API_KEY is set in .env.local\n2. The product ID is correct (current: pdt_xUvseunSwnTJL42kAZPau)\n3. The meter is configured in your dashboard\n4. Check browser console for full error details`)
+        setErrorMessage(`Usage-Based Billing Error: ${errorMessage}`)
+        setShowError(true)
+        setTimeout(() => setShowError(false), 5000)
         setIsLoading(null)
       }
     } catch (error) {
-      console.error('Error creating usage-based subscription:', error)
-      alert('An error occurred. Please try again.')
+      console.error('Error creating usage-based checkout session:', error)
+      setErrorMessage('An error occurred. Please try again.')
+      setShowError(true)
+      setTimeout(() => setShowError(false), 5000)
       setIsLoading(null)
     }
   }
 
-  // Render billing modal and handle submission resolution
-  const handleBillingSubmit = async (payload: BillingPayload) => {
-    if (billingResolverRef.current) {
-      billingResolverRef.current(payload)
-      billingResolverRef.current = null
-    }
-    // Save immediately; the caller also attempts to save to be safe
-    if (session?.user?.email) {
-      await fetch('/api/billing-address', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: session.user.email, billingAddress: payload.billing, customer: payload.customer }),
-      }).catch(() => {})
-    }
-    setShowBillingModal(false)
-  }
+  // Billing submission handler removed; checkout collects data
 
   return (
     <>
@@ -669,7 +646,7 @@ export default function Pricing() {
                 Payment Failed
               </h3>
               <p className="mt-1 text-sm text-red-800 dark:text-red-200">
-                There was an issue processing your payment. Please try again.
+                {errorMessage || 'There was an issue processing your payment. Please try again.'}
               </p>
             </div>
           </div>
@@ -1193,14 +1170,7 @@ export default function Pricing() {
       </section>
       <Faqs />
     </div>
-    {showBillingModal && (
-      <BillingAddressModal
-        open={showBillingModal}
-        initial={billingInitial}
-        onClose={() => setShowBillingModal(false)}
-        onSubmit={handleBillingSubmit}
-      />
-    )}
+    {/* Billing modal removed; checkout handles data collection */}
     </>
   )
 }

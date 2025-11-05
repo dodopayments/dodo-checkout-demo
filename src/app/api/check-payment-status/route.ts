@@ -29,11 +29,31 @@ export async function POST(request: NextRequest) {
 
     // Check if user has paid
     const hasPaid = user.payment === 'paid'
-    const paymentType = user.paymentType
+
+    // Derive payment type dynamically (do not rely on stored paymentType)
+    let derivedPaymentType: 'one-time' | 'subscription' | 'usage-based' | undefined
+    type PaymentMetadata = {
+      plan?: string
+      billing_type?: 'usage_based' | 'subscription' | string
+      credits?: number | string
+      [key: string]: unknown
+    }
+    const metadata = (user.paymentMetadata || {}) as PaymentMetadata
+    const plan = metadata.plan
+    const billingType = metadata.billing_type
+    const subStatus = user.subscriptionStatus as string | undefined
+
+    if (subStatus === 'active' || subStatus === 'trialing' || plan === 'Unlimited Pro' || billingType === 'subscription') {
+      derivedPaymentType = 'subscription'
+    } else if (plan === 'Credit Pack' || typeof metadata.credits !== 'undefined') {
+      derivedPaymentType = 'one-time'
+    } else if (billingType === 'usage_based' || plan === 'Pay Per Image') {
+      derivedPaymentType = 'usage-based'
+    }
 
     return NextResponse.json({
       hasPaid,
-      paymentType,
+      paymentType: derivedPaymentType,
       subscriptionStatus: user.subscriptionStatus,
       paymentDate: user.paymentDate,
       customerId: user.customerId, // Include customer ID for usage-based tracking

@@ -222,7 +222,15 @@ export default function Dashboard() {
         })
         const data = await res.json()
         if (res.ok && Array.isArray(data.images)) {
-          const mapped = data.images.map((doc: any) => ({
+          type ApiImageDoc = {
+            imageId: string
+            url: string
+            prompt?: string
+            createdAt: string | Date
+            resolution?: string
+            style?: string
+          }
+          const mapped = (data.images as ApiImageDoc[]).map((doc: ApiImageDoc) => ({
             id: doc.imageId,
             url: doc.url,
             prompt: doc.prompt || '',
@@ -369,7 +377,15 @@ export default function Dashboard() {
           const res = await fetch(`/api/images?email=${encodeURIComponent(session.user.email)}`)
           const data = await res.json()
           if (res.ok && Array.isArray(data.images)) {
-            const mapped = data.images.map((doc: any) => ({
+            type ApiImageDoc = {
+              imageId: string
+              url: string
+              prompt?: string
+              createdAt: string | Date
+              resolution?: string
+              style?: string
+            }
+            const mapped = (data.images as ApiImageDoc[]).map((doc: ApiImageDoc) => ({
               id: doc.imageId,
               url: doc.url,
               prompt: doc.prompt || '',
@@ -380,7 +396,9 @@ export default function Dashboard() {
             setImages(mapped)
           }
         }
-      } catch (_) {}
+      } catch {
+        // ignore
+      }
     }
   }
 
@@ -644,7 +662,7 @@ export default function Dashboard() {
                             No Credits Remaining
                           </h3>
                           <p className="mt-1 text-sm text-red-700 dark:text-red-300">
-                            You've used all {usageStats.totalCredits} credits. Purchase more credits or upgrade to unlimited generation.
+                            You&apos;ve used all {usageStats.totalCredits} credits. Purchase more credits or upgrade to unlimited generation.
                           </p>
                           <div className="mt-3">
                             <Button
@@ -1044,7 +1062,7 @@ export default function Dashboard() {
                   {planConfig.isUnlimited && (
                     <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
                       <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
-                        You're on our best plan! Enjoy unlimited generation. 🎉
+                        You&apos;re on our best plan! Enjoy unlimited generation. 🎉
                       </p>
                     </div>
                   )}
@@ -1080,7 +1098,15 @@ export default function Dashboard() {
                             const res = await fetch(`/api/images?email=${encodeURIComponent(session.user.email)}`)
                             const data = await res.json()
                             if (res.ok && Array.isArray(data.images)) {
-                              const mapped = data.images.map((doc: any) => ({
+                              type ApiImageDoc = {
+                                imageId: string
+                                url: string
+                                prompt?: string
+                                createdAt: string | Date
+                                resolution?: string
+                                style?: string
+                              }
+                              const mapped = (data.images as ApiImageDoc[]).map((doc: ApiImageDoc) => ({
                                 id: doc.imageId,
                                 url: doc.url,
                                 prompt: doc.prompt || '',
@@ -1091,7 +1117,9 @@ export default function Dashboard() {
                               setImages(mapped)
                             }
                           }
-                        } catch (_) {}
+                        } catch {
+                          // ignore
+                        }
                         alert('All images have been cleared.')
                       }
                     }}

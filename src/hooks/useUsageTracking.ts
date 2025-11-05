@@ -130,7 +130,7 @@ export function useUsageTracking(customerId?: string): UseUsageTrackingReturn {
  * )
  * ```
  */
-export function withUsageTracking<T extends (...args: any[]) => Promise<any>>(
+export function withUsageTracking<T extends (...args: unknown[]) => Promise<unknown>>(
   fn: T,
   eventName: string,
   getMetadata?: (...args: Parameters<T>) => UsageMetadata

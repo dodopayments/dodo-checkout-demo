@@ -37,7 +37,42 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function handlePaymentSuccess(data: any) {
+type PaymentWebhookData = {
+  event_type?: string
+  type?: string
+  customer?: { email?: string }
+  billing_details?: { email?: string }
+  metadata?: Record<string, string>
+  payment_id?: string
+  id?: string
+  subscription_id?: string
+  status?: string
+  data?: {
+    object?: {
+      customer_email?: string
+      metadata?: Record<string, string>
+      id?: string
+      subscription?: unknown
+      status?: string
+    }
+  }
+}
+
+type PaymentType = 'one-time' | 'subscription' | 'usage-based'
+
+type UserUpdateData = {
+  payment: 'paid' | 'unpaid'
+  paymentType: PaymentType
+  paymentDate?: Date
+  lastPaymentId?: string
+  paymentMetadata?: Record<string, string>
+  totalCredits?: number
+  subscriptionId?: string
+  subscriptionStatus?: string
+  lastUpdated?: Date
+}
+
+async function handlePaymentSuccess(data: PaymentWebhookData) {
   const client = await clientPromise
   const db = client.db()
   const usersCollection = db.collection('users')
@@ -55,7 +90,7 @@ async function handlePaymentSuccess(data: any) {
   const paymentType = determinePaymentType(metadata, data)
 
   // Prepare update data
-  const updateData: any = {
+  const updateData: UserUpdateData = {
     payment: 'paid',
     paymentType: paymentType,
     paymentDate: new Date(),
@@ -91,7 +126,7 @@ async function handlePaymentSuccess(data: any) {
   })
 }
 
-async function handleSubscriptionCreated(data: any) {
+async function handleSubscriptionCreated(data: PaymentWebhookData) {
   const client = await clientPromise
   const db = client.db()
   const usersCollection = db.collection('users')
@@ -131,7 +166,7 @@ async function handleSubscriptionCreated(data: any) {
   })
 }
 
-async function handleSubscriptionUpdated(data: any) {
+async function handleSubscriptionUpdated(data: PaymentWebhookData) {
   const client = await clientPromise
   const db = client.db()
   const usersCollection = db.collection('users')
@@ -163,7 +198,10 @@ async function handleSubscriptionUpdated(data: any) {
   })
 }
 
-function determinePaymentType(metadata: any, data: any): 'one-time' | 'subscription' | 'usage-based' {
+function determinePaymentType(
+  metadata: Record<string, string>,
+  data: PaymentWebhookData,
+): PaymentType {
   // Check metadata first
   if (metadata.billing_type === 'usage_based') {
     return 'usage-based'

@@ -1,5 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import clientPromise from '@/lib/mongo'
+import type { Collection, UpdateFilter } from 'mongodb'
+
+type UserDoc = {
+  email: string
+  paymentType?: 'usage-based' | 'one-time' | 'subscription'
+  imagesGenerated?: number
+  totalUsageCost?: number
+  lastImageGenerated?: Date
+  lastActivityDate?: Date
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,7 +25,7 @@ export async function POST(request: NextRequest) {
 
     const client = await clientPromise
     const db = client.db()
-    const usersCollection = db.collection('users')
+    const usersCollection: Collection<UserDoc> = db.collection('users')
 
     // Find user
     const user = await usersCollection.findOne({ email })
@@ -46,17 +56,15 @@ export async function POST(request: NextRequest) {
     const currentTotalCost = user.totalUsageCost || 0
 
     // Update user with new usage data
-    const updateResult = await usersCollection.updateOne(
-      { email },
-      ({
-        $set: {
-          imagesGenerated: currentImagesGenerated + 1,
-          totalUsageCost: Number((currentTotalCost + cost).toFixed(2)),
-          lastImageGenerated: new Date(),
-          lastActivityDate: new Date(),
-        },
-      } as any)
-    )
+    const updateDoc: UpdateFilter<UserDoc> = {
+      $set: {
+        imagesGenerated: currentImagesGenerated + 1,
+        totalUsageCost: Number((currentTotalCost + cost).toFixed(2)),
+        lastImageGenerated: new Date(),
+        lastActivityDate: new Date(),
+      },
+    }
+    const updateResult = await usersCollection.updateOne({ email }, updateDoc)
 
     if (updateResult.modifiedCount === 0) {
       console.warn('No documents were modified')

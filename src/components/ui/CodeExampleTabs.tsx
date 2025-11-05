@@ -7,8 +7,8 @@ export default function CodeExampleTabs({
   tab1,
   tab2,
 }: {
-  tab1?: any
-  tab2?: any
+  tab1?: React.ReactNode
+  tab2?: React.ReactNode
 }) {
   return (
     <Tabs.Root

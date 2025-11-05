@@ -292,7 +292,7 @@ export default function Pricing() {
         // Prefill but clear invalid country to force selection
         setBillingInitial({ billing: billing ? { ...billing, country: '' } : undefined, customer })
       }
-    } catch (e) {
+    } catch {
       // ignore and fall back to modal
     }
 

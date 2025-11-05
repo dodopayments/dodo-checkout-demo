@@ -7,15 +7,15 @@ if (!MONGODB_URI) {
     throw new Error('Please define the MONGODB_URI environment variable');
 }
 
-declare global {
-    var mongoose: any;
-}
+type MongooseCache = {
+    conn: typeof mongoose | null;
+    promise: Promise<typeof mongoose> | null;
+};
 
-let cached = global.mongoose;
+const globalForMongoose = globalThis as unknown as { mongoose?: MongooseCache };
 
-if (!cached) {
-    cached = global.mongoose = { conn: null, promise: null };
-}
+const cached: MongooseCache = globalForMongoose.mongoose ?? { conn: null, promise: null };
+globalForMongoose.mongoose = cached;
 
 async function dbConnect() {
     if (cached.conn) {

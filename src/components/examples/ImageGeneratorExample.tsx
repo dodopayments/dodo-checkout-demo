@@ -14,6 +14,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import { useUsageTracking } from '@/hooks/useUsageTracking'
 
 interface GeneratedImage {
@@ -93,7 +94,7 @@ export function ImageGeneratorExample() {
           AI Image Generator
         </h2>
         <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-          Generate amazing images with AI. You're charged $0.75 per image.
+          Generate amazing images with AI. You&apos;re charged $0.75 per image.
         </p>
 
         {/* Error Display */}
@@ -181,10 +182,13 @@ export function ImageGeneratorExample() {
                   key={image.id}
                   className="group relative overflow-hidden rounded-lg border border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-800"
                 >
-                  <img
+                  <Image
                     src={image.url}
                     alt={image.prompt}
+                    fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                     className="h-64 w-full object-cover"
+                    unoptimized
                   />
                   <div className="p-3">
                     <p className="text-sm text-gray-600 line-clamp-2 dark:text-gray-400">
@@ -246,7 +250,7 @@ export function ImageGeneratorExample() {
             </h3>
             <div className="mt-2 text-sm text-blue-700 dark:text-blue-300">
               <p>
-                Each image generation is tracked and you'll be billed $0.75 per image at the end of your billing cycle.
+                Each image generation is tracked and you&apos;ll be billed $0.75 per image at the end of your billing cycle.
                 View your usage and billing details in your <a href="/dashboard" className="font-medium underline">dashboard</a>.
               </p>
             </div>

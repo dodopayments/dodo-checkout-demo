@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import type { Document, UpdateFilter, UpdateOptions } from 'mongodb'
 import clientPromise from '@/lib/mongo'
 
 // GET: fetch billing address for a user by email (query param)
@@ -45,18 +46,18 @@ export async function POST(request: NextRequest) {
     const db = client.db()
     const users = db.collection('users')
 
-    const update = await users.updateOne(
-      { email },
-      {
-        $set: {
-          billingAddress,
-          customer: customer ? customer : undefined,
-          updatedAt: new Date(),
-        },
-        $setOnInsert: { createdAt: new Date() },
-      } as any,
-      { upsert: true } as any
-    )
+    const updateDoc: UpdateFilter<Document> = {
+      $set: {
+        billingAddress,
+        customer: customer ? customer : undefined,
+        updatedAt: new Date(),
+      },
+      $setOnInsert: { createdAt: new Date() },
+    }
+
+    const options: UpdateOptions = { upsert: true }
+
+    const update = await users.updateOne({ email } as Document, updateDoc, options)
 
     return NextResponse.json({ success: true, upserted: update.upsertedCount > 0 })
   } catch (error) {

@@ -25,6 +25,8 @@ export default function Dashboard() {
   const [images, setImages] = useState<GeneratedImage[]>([])
   const [selectedImage, setSelectedImage] = useState<GeneratedImage | null>(null)
   const [activeTab, setActiveTab] = useState<'generate' | 'gallery' | 'settings'>('generate')
+  const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+  const [formError, setFormError] = useState<string | null>(null)
   const [paymentStatus, setPaymentStatus] = useState<{
     hasPaid: boolean
     paymentType?: string
@@ -249,9 +251,10 @@ export default function Dashboard() {
 
   const generateImage = async () => {
     if (!prompt.trim()) {
-      alert('Please enter a prompt')
+      setFormError('Please enter a prompt')
       return
     }
+    setFormError(null)
 
     setIsGenerating(true)
 
@@ -340,12 +343,14 @@ export default function Dashboard() {
         console.error('Failed to save image to database', e)
       }
 
-      // Show success message
-      alert('Image generated successfully! 🎉')
+      // Show success notification
+      setNotification({ type: 'success', message: 'Image generated successfully! 🎉' })
+      setTimeout(() => setNotification(null), 3000)
 
     } catch (err) {
       console.error('Error generating image:', err)
-      alert('Failed to generate image. Please try again.')
+      setNotification({ type: 'error', message: 'Failed to generate image. Please try again.' })
+      setTimeout(() => setNotification(null), 5000)
     } finally {
       setIsGenerating(false)
     }
@@ -454,6 +459,26 @@ export default function Dashboard() {
 
   return (
     <>
+      {notification && (
+        <div className={`fixed top-4 right-4 z-50 rounded-xl border-2 p-4 shadow-lg ${notification.type === 'success' ? 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/90' : 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950/90'}`}>
+          <div className="flex items-start gap-3">
+            <div className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${notification.type === 'success' ? 'bg-green-600 text-white dark:bg-green-400 dark:text-gray-900' : 'bg-red-600 text-white dark:bg-red-400 dark:text-gray-900'}`}>
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                {notification.type === 'success' ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                )}
+              </svg>
+            </div>
+            <div className="flex-1">
+              <p className={`${notification.type === 'success' ? 'text-green-900 dark:text-green-100' : 'text-red-900 dark:text-red-100'} text-sm`}>
+                {notification.message}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
       <DemoBottomPopup />
       <div className="flex flex-col overflow-hidden px-3 pt-20"></div>
       <div className="min-h-screen bg-white dark:bg-gray-950 mt-20">
@@ -765,6 +790,9 @@ export default function Dashboard() {
                       className="block w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 placeholder-gray-400 focus:border-lime-500 focus:outline-none focus:ring-2 focus:ring-lime-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-500"
                       disabled={isGenerating}
                     />
+                  {formError && (
+                    <p className="mt-2 text-sm text-red-600 dark:text-red-400">{formError}</p>
+                  )}
                   </div>
 
                   <div className="flex items-center justify-between">
@@ -1120,7 +1148,8 @@ export default function Dashboard() {
                         } catch {
                           // ignore
                         }
-                        alert('All images have been cleared.')
+                        setNotification({ type: 'success', message: 'All images have been cleared.' })
+                        setTimeout(() => setNotification(null), 3000)
                       }
                     }}
                     className="w-full inline-flex items-center justify-center px-4 py-2 border border-red-300 dark:border-red-700 rounded-lg text-sm font-medium text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"

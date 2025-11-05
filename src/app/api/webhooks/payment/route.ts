@@ -113,8 +113,8 @@ async function handlePaymentSuccess(data: PaymentWebhookData) {
   // Update user record
   const updateResult = await usersCollection.updateOne(
     { email: customerEmail },
-    { $set: updateData },
-    { upsert: false } // Don't create if user doesn't exist
+    { $set: updateData, $setOnInsert: { email: customerEmail } },
+    { upsert: true }
   )
 
   console.log('User payment status updated:', {
@@ -155,8 +155,9 @@ async function handleSubscriptionCreated(data: PaymentWebhookData) {
         paymentDate: new Date(),
         paymentMetadata: metadata,
       },
+      $setOnInsert: { email: customerEmail },
     },
-    { upsert: false }
+    { upsert: true }
   )
 
   console.log('User subscription created:', {
@@ -188,8 +189,9 @@ async function handleSubscriptionUpdated(data: PaymentWebhookData) {
         payment: status === 'active' || status === 'trialing' ? 'paid' : 'unpaid',
         lastUpdated: new Date(),
       },
+      $setOnInsert: { email: customerEmail },
     },
-    { upsert: false }
+    { upsert: true }
   )
 
   console.log('User subscription updated:', {

@@ -1,50 +1,146 @@
-# Dodo Payment Integration (Next.js)
+## Dodo Checkout Starter
 
-This project demonstrates a comprehensive [Dodo Payments](https://dodopayments.com) integration solution using Next.js. It includes payment link creation, webhook updates, and merchant database updates, all built with TypeScript and Next.js. Follow the steps in the documentation below to quickly set up and start using the Dodo payment features in your application.
+End-to-end demo app showing three billing models wired to Dodo Payments (test environment):
+- One-time payments (credit pack)
+- Recurring subscriptions
+- Usage-based billing (pay-per-event)
 
-## Live Demo
+Built with Next.js App Router, NextAuth, MongoDB, and Tailwind.
 
-Check out this app live at [atlas.dodopayments.com](https://atlas.dodopayments.com)
+### Quick start
+1. Clone and install:
+   - `npm install`
+2. Create `.env.local` (see Environment variables) and fill required keys.
+3. Run locally:
+   - `npm run dev` → open `http://localhost:3000`
+4. Go to `Pricing` → pick a plan → complete Dodo test checkout → land on `Dashboard`.
 
-## Documentation
+---
 
-Refer to the documentation for a more detailed walkthrough of the project:
-[Link](https://docs.dodopayments.com/api-reference/integration-guide)
+## How the demo works
 
-## Features
+### One-time payment (Credit Pack)
+- User picks Credit Pack on `Pricing`.
+- Backend calls `POST /api/create-payment` → gets `payment_link` from Dodo → redirect to checkout.
+- After success, `Dashboard` calls `POST /api/verify-payment` to confirm and update the user in MongoDB.
+- Credits added: 10 credits per successful purchase.
 
-- 🔒 Secure payment processing with Dodo Payments
-- ⚡ Server-side API routes for payment handling
-- 🎯 Type-safe implementation with TypeScript
-- 🔄 Real-time payment status updates with webhooks
-- 🎨 Styled with TailwindCSS
-- ✨ Modern Next.js App Router architecture
+### Subscriptions (Monthly/Annual)
+- User picks a subscription plan.
+- Backend calls `POST /api/create-subscription` → `payment_link` → redirect to checkout.
+- On return, `POST /api/verify-payment` confirms and stores subscription status.
 
-## API Routes
+### Usage-based billing (Pay per Image)
+- User chooses the usage-based plan.
+- Backend calls `POST /api/create-usage-subscription` (marks `metadata.billing_type = usage_based`).
+- Verification persists the Dodo `customer_id`.
+- When features are used (e.g., image generation), the app sends usage events that accrue cost.
 
-- `POST /api/payments/create` - Create new payment link
-- `POST /api/payments/webhook` - Handle payment webhooks
-- `POST /api/payments/cancel` - Cancel subscription payment
+### Tracking usage in-app
+- Hook `useUsageTracking` posts to `POST /api/send-usage-event`, which forwards usage to Dodo against the stored `customer_id`.
+- The dashboard reads current usage/cost via `POST /api/check-payment-status`.
 
-## Support
+Example snippet:
 
-For support, please raise an issue in the GitHub repository or refer to the documentation.
+```typescript
+import { useUsageTracking } from '@/hooks/useUsageTracking'
 
-## Show Your Support
+function ImageGenerator() {
+  const { trackUsage } = useUsageTracking()
 
-If you find this project helpful, please leave a star! ⭐
+  async function generateImage() {
+    const image = await yourAPI.generate()
+    await trackUsage('image.generation', { resolution: '1024x1024' })
+    return image
+  }
+}
+```
 
-## Contributing
+See `src/components/examples/ImageGeneratorExample.tsx` for a full example.
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+---
 
-## Useful Links
+## Environment variables
+Create `.env.local` in the project root and provide the following:
 
-- Website: [dodopayments.com](https://dodopayments.com)
-- Documentation: [docs.dodopayments.com](https://docs.dodopayments.com)
-- Dashboard: [app.dodopayments.com](https://app.dodopayments.com)
-- Twitter: [x.com/dodopayments](https://x.com/dodopayments)
+Required for database and NextAuth:
+- `MONGO_URI` – MongoDB connection string
+- `NEXTAUTH_URL` – e.g. `http://localhost:3000`
+- `NEXTAUTH_SECRET` – random string for session/JWT encryption
+
+Auth providers (enable at least one sign-in method):
+- `RESEND_API_KEY` – for email sign-in via Resend
+- `FROM_EMAIL` – sender email for Resend (e.g. `no-reply@yourdomain.com`)
+- `AUTH_GOOGLE_ID` – Google OAuth Client ID
+- `AUTH_GOOGLE_SECRET` – Google OAuth Client Secret
+
+Dodo Payments (test environment):
+- `DODO_PAYMENTS_API_KEY` – server-side secret key for Dodo test API
+- `NEXT_PUBLIC_APP_URL` – app base URL used in return URLs (default `http://localhost:3000`)
+
+Notes:
+- All server routes call `https://test.dodopayments.com`.
+- For local dev, webhooks to `localhost` are often blocked; use manual verification (`/api/verify-payment`).
+
+---
+
+## Running locally
+```bash
+npm install
+npm run dev
+# open http://localhost:3000
+```
+
+Sign in from `/auth/signin`, visit `Pricing`, complete a test checkout, and review your status on `Dashboard`.
+
+---
+
+## API routes (server)
+- `POST /api/create-payment` – Create a one-time payment and get a Dodo `payment_link`.
+- `POST /api/create-subscription` – Create a recurring subscription and get a `payment_link`.
+- `POST /api/create-usage-subscription` – Create a usage-based subscription and get a `payment_link`.
+- `POST /api/send-usage-event` – Forward a usage event for the current user’s `customer_id`.
+- `POST /api/check-payment-status` – Read persisted user payment and usage status.
+- `POST /api/verify-payment` – Manually verify payment/subscription with Dodo (handy locally).
+- `POST /api/webhooks/payment` – Receives Dodo webhooks (configure in production; optional locally).
+
+Webhook signature verification is stubbed; add verification before going to production.
+
+---
+
+## Tech stack
+- Next.js App Router (TypeScript)
+- NextAuth (JWT sessions, MongoDB adapter)
+- MongoDB (native driver)
+- Tailwind CSS
+- Dodo Payments (test API)
+
+Key files:
+- Auth config: `auth.ts`
+- DB client: `src/lib/mongo.ts`
+- Payments/usage routes: `src/app/api/*`
+- Dashboard: `src/app/dashboard/page.tsx`
+- Pricing: `src/app/pricing/page.tsx`
+
+---
+
+## Troubleshooting
+- Missing `MONGO_URI`: the app will throw at startup – set `.env.local`.
+- 500 on payment routes: ensure `DODO_PAYMENTS_API_KEY` is set.
+- Redirect loops after sign-in: check `NEXTAUTH_URL` and `NEXTAUTH_SECRET`.
+- No credits after purchasing Credit Pack: use `POST /api/verify-payment` (local), or configure webhooks in prod.
+- Usage not reflected: ensure `customer_id` is saved by `verify-payment` and your feature calls `trackUsage`.
+
+---
+
+## Demo walkthrough
+
+Follow these paths end-to-end in test mode:
+1. Credit Pack → Pay → Dashboard shows +10 credits
+2. Subscription → Pay → Dashboard shows active subscription
+3. Usage-based → Pay → Generate image → Usage and cost update on Dashboard
+
+---
+
+## Links
+- Dodo Payments Docs: `https://docs.dodopayments.com`

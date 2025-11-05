@@ -1,19 +1,23 @@
-import Catalog from "@/components/Home/catalog";
-import NewLaunched from "@/components/Home/NewLaunched";
-import OverlayCheckout from "@/components/Home/OverlayCheckout";
-import Subscriptions from "@/components/Home/Subscriptions";
+import CodeExample from "@/components/ui/CodeExample"
+import Cta from "@/components/ui/Cta"
+import Features from "@/components/ui/Features"
+import { GlobalDatabase } from "@/components/ui/GlobalDatabase"
+import Hero from "@/components/ui/Hero"
+import LogoCloud from "@/components/ui/LogoCloud"
+import DemoBottomPopup from "@/components/ui/DemoBottomPopup"
 
-const Page = async () => {
+export default function Home() {
   return (
-    <main className="bg-[#E7E7E3] flex flex-col">
-      <div className="flex flex-col w-full min-h-screen px-3 lg:px-12">
-        <NewLaunched />
-        <Catalog />
-      </div>
-      <Subscriptions />
-      <OverlayCheckout />
-    </main>
-  );
-};
-
-export default Page;
+    <>
+      <DemoBottomPopup />
+      <main className="flex flex-col overflow-hidden pt-20">
+        <Hero />
+        <LogoCloud />
+        <GlobalDatabase />
+        <CodeExample />
+        <Features />
+        <Cta />
+      </main>
+    </>
+  )
+}

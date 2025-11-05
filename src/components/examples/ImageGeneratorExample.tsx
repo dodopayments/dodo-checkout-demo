@@ -193,16 +193,7 @@ export function ImageGeneratorExample() {
                     alt={image.prompt}
                     fill
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-<<<<<<< HEAD
-<<<<<<< HEAD
                     className="object-cover"
-=======
-                    className="h-64 w-full object-cover"
-                    unoptimized
->>>>>>> cfcd3e1 (Refactor MongoDB usage and improve type safety)
-=======
-                    className="object-cover"
->>>>>>> 027a8e4 (Update ImageGeneratorExample.tsx)
                   />
                   <div className="p-3">
                     <p className="text-sm text-gray-600 line-clamp-2 dark:text-gray-400">

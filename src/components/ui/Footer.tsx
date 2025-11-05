@@ -34,7 +34,7 @@ export default function Footer() {
           <div className="space-y-8">
             <DatabaseLogo className="w-32 sm:w-40" />
             <p className="text-sm leading-6 text-gray-600 dark:text-gray-400">
-              A demo showcasing Dodo Payments' flexible billing capabilities.
+              A demo showcasing Dodo Payments&#39; flexible billing capabilities.
               Experience usage-based, one-time, and subscription payments.
             </p>
             <div className="flex space-x-6">

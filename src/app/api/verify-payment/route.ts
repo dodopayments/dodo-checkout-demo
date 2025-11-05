@@ -121,11 +121,25 @@ export async function POST(request: NextRequest) {
   }
 }
 
+type PaymentType = 'one-time' | 'subscription' | 'usage-based'
+
+type UserUpdateData = {
+  payment: 'paid' | 'unpaid'
+  paymentType: PaymentType
+  paymentDate: Date
+  lastPaymentId: string
+  paymentMetadata: Record<string, string>
+  totalCredits?: number
+  subscriptionId?: string
+  subscriptionStatus?: string
+  customerId?: string
+}
+
 async function updateUserPaymentStatus(
   email: string,
-  paymentType: string,
+  paymentType: PaymentType,
   paymentId: string,
-  metadata: any,
+  metadata: Record<string, string>,
   subscriptionId?: string,
   subscriptionStatus?: string,
   customerId?: string
@@ -134,7 +148,7 @@ async function updateUserPaymentStatus(
   const db = client.db()
   const usersCollection = db.collection('users')
 
-  const updateData: any = {
+  const updateData: UserUpdateData = {
     payment: 'paid',
     paymentType: paymentType,
     paymentDate: new Date(),
@@ -180,7 +194,10 @@ async function updateUserPaymentStatus(
   return result
 }
 
-function determinePaymentType(metadata: any, data: any): 'one-time' | 'subscription' | 'usage-based' {
+function determinePaymentType(
+  metadata: Record<string, string>,
+  data: { subscription_id?: string; subscription?: unknown },
+): PaymentType {
   if (metadata.billing_type === 'usage_based') return 'usage-based'
   if (metadata.plan === 'Pay Per Image') return 'usage-based'
   if (metadata.plan === 'Credit Pack') return 'one-time'

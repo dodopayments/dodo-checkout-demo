@@ -13,9 +13,16 @@ export default function slugify(str: string) {
     .replace(/[^\w\-]+/g, "") // Remove all non-word characters except for -
     .replace(/\-\-+/g, "-") // Replace multiple - with single -
 }
+type CustomHeadingProps = React.HTMLAttributes<HTMLHeadingElement> & {
+  level: 1 | 2 | 3 | 4 | 5 | 6
+  children: React.ReactNode
+}
 
-function CustomHeading(props: any) {
-  let slug = slugify(props.children)
+function CustomHeading(props: CustomHeadingProps) {
+  const childText = React.Children.toArray(props.children)
+    .map((c) => (typeof c === "string" ? c : ""))
+    .join("")
+  const slug = slugify(childText)
   return React.createElement(
     `h${props.level}`,
     {
@@ -78,24 +85,26 @@ export const Bold = (props: React.HTMLAttributes<HTMLSpanElement>) => (
   <span className="font-semibold text-gray-900 dark:text-gray-50" {...props} />
 )
 
-export function CustomLink(props: any) {
-  let href = props.href
+export function CustomLink(
+  props: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string; children?: React.ReactNode },
+) {
+  const { href, children, ...rest } = props
   const style =
     "text-lime-600 font-medium hover:text-lime-500 dark:text-lime-500 hover:dark:text-lime-400"
   if (href.startsWith("/")) {
     return (
-      <Link className={style} href={href} {...props}>
-        {props.children}
+      <Link className={style} href={href} {...rest}>
+        {children}
       </Link>
     )
   }
 
   if (href.startsWith("#")) {
-    return <a {...props} className={style} />
+    return <a href={href} className={style} {...rest} />
   }
 
   return (
-    <a className={style} target="_blank" rel="noopener noreferrer" {...props} />
+    <a href={href} className={style} target="_blank" rel="noopener noreferrer" {...rest} />
   )
 }
 
@@ -106,7 +115,7 @@ export const ChangelogEntry = ({
 }: {
   version: string
   date: string
-  children: any
+  children: React.ReactNode
 }) => (
   <div className="relative my-20 flex flex-col justify-center gap-x-14 border-b border-gray-200 md:flex-row dark:border-gray-800">
     <div className="mb-4 md:mb-10 md:w-1/3">

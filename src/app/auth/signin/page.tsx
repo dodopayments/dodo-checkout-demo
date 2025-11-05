@@ -41,7 +41,7 @@ function SignInContent() {
       } else {
         setIsEmailSent(true)
       }
-    } catch (error) {
+    } catch {
       setError("An error occurred. Please try again.")
     } finally {
       setIsLoading(false)
@@ -54,7 +54,7 @@ function SignInContent() {
         callbackUrl: returnTo,
         redirect: true
       })
-    } catch (error) {
+    } catch {
       setError("Failed to sign in with Google. Please try again.")
     }
   }
@@ -114,7 +114,7 @@ function SignInContent() {
                   </h3>
                   <div className="mt-2 text-sm text-sky-700 dark:text-sky-300">
                     <p>
-                      We've sent a magic link to <span className="font-medium">{email}</span>.
+                      We&#39;ve sent a magic link to <span className="font-medium">{email}</span>.
                       Click the link in the email to sign in.
                     </p>
                   </div>

@@ -6,10 +6,24 @@ import clientPromise from '@/lib/mongo'
  * Useful for local development where webhooks can't reach localhost
  * Also serves as a fallback if webhook delivery fails
  */
+type VerifyBody = {
+  email?: string
+  paymentId?: string
+  subscriptionId?: string
+  sessionId?: string
+}
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { email, paymentId, subscriptionId, sessionId } = body
+    let body: VerifyBody | undefined
+    try {
+      body = await request.json()
+    } catch {
+      return NextResponse.json(
+        { error: 'Invalid JSON body' },
+        { status: 400 }
+      )
+    }
+    const { email, paymentId, subscriptionId, sessionId } = body || {}
 
     if (!email) {
       return NextResponse.json(
@@ -256,9 +270,6 @@ async function updateUserPaymentStatus(
     lastPaymentId: paymentId,
     paymentMetadata: metadata,
   }
-
-  let creditsAdded: number | undefined
-
   if (subscriptionId) {
     updateData.subscriptionId = subscriptionId
     updateData.subscriptionStatus = subscriptionStatus

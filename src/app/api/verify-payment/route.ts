@@ -257,6 +257,8 @@ async function updateUserPaymentStatus(
     paymentMetadata: metadata,
   }
 
+  let creditsAdded: number | undefined
+
   if (subscriptionId) {
     updateData.subscriptionId = subscriptionId
     updateData.subscriptionStatus = subscriptionStatus

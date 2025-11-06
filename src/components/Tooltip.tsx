@@ -1,5 +1,3 @@
-// Tremor Tooltip [v0.0.2]
-
 "use client"
 
 import * as TooltipPrimitives from "@radix-ui/react-tooltip"
@@ -49,7 +47,6 @@ const Tooltip = React.forwardRef<
           defaultOpen={defaultOpen}
           onOpenChange={onOpenChange}
           delayDuration={delayDuration}
-          tremor-id="tremor-raw"
         >
           <TooltipPrimitives.Trigger onClick={onClick} asChild={triggerAsChild}>
             {children}

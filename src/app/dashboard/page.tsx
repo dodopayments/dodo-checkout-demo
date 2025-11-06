@@ -125,11 +125,10 @@ export default function Dashboard() {
         // Get stored payment/subscription IDs from localStorage
         const storedPaymentId = localStorage.getItem('pending_payment_id')
         const storedSubscriptionId = localStorage.getItem('pending_subscription_id')
+        const storedSessionId = localStorage.getItem('pending_checkout_session_id')
 
         // If coming back from payment, verify it first
         if ((paymentSuccess || subscriptionSuccess) && (storedPaymentId || storedSubscriptionId)) {
-          console.log('Verifying payment...', { storedPaymentId, storedSubscriptionId })
-
           const verifyResponse = await fetch('/api/verify-payment', {
             method: 'POST',
             headers: {
@@ -143,12 +142,10 @@ export default function Dashboard() {
           })
 
           const verifyData = await verifyResponse.json()
-          console.log('Verification result:', verifyData)
 
           // Store customer ID for usage tracking if available
           if (verifyData.customerId) {
             sessionStorage.setItem('dodo_customer_id', verifyData.customerId)
-            console.log('Stored customer ID for usage tracking:', verifyData.customerId)
           }
 
           // Clear stored IDs
@@ -157,6 +154,25 @@ export default function Dashboard() {
 
           // Clean URL
           window.history.replaceState({}, '', '/dashboard')
+        }
+
+        // If we have a pending checkout session (overlay or redirect), verify it immediately
+        if (storedSessionId) {
+          const verifySessionResp = await fetch('/api/verify-payment', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              email: session.user.email,
+              sessionId: storedSessionId,
+            }),
+          })
+          const verifySessionData = await verifySessionResp.json().catch(() => ({}))
+          if (verifySessionData?.customerId) {
+            sessionStorage.setItem('dodo_customer_id', verifySessionData.customerId)
+          }
+          localStorage.removeItem('pending_checkout_session_id')
         }
 
         // Now check payment status
@@ -186,16 +202,9 @@ export default function Dashboard() {
           totalCredits: data.totalCredits || 0,
         })
 
-        console.log('Loaded usage stats from database:', {
-          imagesGenerated: data.imagesGenerated || 0,
-          totalUsageCost: data.totalUsageCost || 0,
-          totalCredits: data.totalCredits || 0,
-        })
-
         // Store customer ID for usage tracking if available
         if (data.customerId) {
           sessionStorage.setItem('dodo_customer_id', data.customerId)
-          console.log('Stored customer ID for usage tracking:', data.customerId)
         }
 
         // Redirect to pricing if not paid
@@ -307,7 +316,6 @@ export default function Dashboard() {
             lastImageGenerated: new Date(trackData.usage.lastImageGenerated),
             totalCredits: prev.totalCredits, // Keep existing totalCredits
           }))
-          console.log('Usage tracked in database:', trackData.usage)
         }
       } catch (err) {
         console.error('Error tracking usage in database:', err)
@@ -323,7 +331,7 @@ export default function Dashboard() {
         })
 
         if (!tracked) {
-          console.warn('Failed to track usage with Dodo Payments, but image was generated')
+          // Failed to track usage with Dodo Payments, but image was generated
         }
       }
 
@@ -365,7 +373,7 @@ export default function Dashboard() {
         })
         const data = await res.json().catch(() => ({}))
         if (!res.ok || data.success === false) {
-          console.warn('Server failed to delete image', data)
+          // Server failed to delete image
         }
       }
     } catch (e) {
@@ -1111,7 +1119,7 @@ export default function Dashboard() {
                           const res = await fetch(`/api/images?email=${encodeURIComponent(session.user.email)}`, { method: 'DELETE' })
                           const data = await res.json().catch(() => ({}))
                           if (!res.ok || data.success === false) {
-                            console.warn('Server failed to clear images', data)
+                            // Server failed to clear images
                           }
                         }
                       } catch (e) {

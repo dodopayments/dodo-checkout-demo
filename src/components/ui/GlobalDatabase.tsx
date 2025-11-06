@@ -22,12 +22,7 @@ export const GlobalDatabase: FunctionComponent = () => {
       baseColor: [0.3, 0.3, 0.3],
       glowColor: [0.15, 0.15, 0.15],
       markerColor: [100, 100, 100],
-      markers: [
-        // { location: [37.7595, -122.4367], size: 0.03 }, // San Francisco
-        // { location: [40.7128, -74.006], size: 0.03 }, // New York City
-        // { location: [35.6895, 139.6917], size: 0.03 }, // Tokyo
-        // { location: [28.7041, 77.1025], size: 0.03 }, // Delhi
-      ],
+      markers: [],
       onRender: (state: { phi?: number }) => {
         state.phi = phi
         phi += 0.0002

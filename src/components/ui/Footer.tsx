@@ -11,13 +11,13 @@ const navigation = {
   ],
   resources: [
     { name: "FAQs", href: "/pricing#faq-title", external: false },
-    { name: "GitHub", href: "https://github.com/Dodo-Payments?utm_source=kalash", external: true },
-    { name: "Discord Community", href: "https://discord.gg/dodo?utm_source=kalash", external: true },
+    { name: "GitHub", href: "https://github.com/dodopayments?utm_source=kalash", external: true },
+    { name: "Discord Community", href: "https://discord.gg/bYqAp4ayYh", external: true },
     { name: "Support", href: "https://docs.dodopayments.com/miscellaneous/help-support?utm_source=kalash", external: true },
   ],
   company: [
     { name: "About", href: "/about", external: false },
-    { name: "Dashboard", href: "https://app.dodopayments.com/?utm_source=kalash", external: true },
+    { name: "Dashboard", href: "/dashboard", external: false },
     { name: "Status", href: "https://status.dodopayments.com/?utm_source=kalash", external: true },
   ],
   legal: [

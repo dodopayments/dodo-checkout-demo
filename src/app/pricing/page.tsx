@@ -255,7 +255,7 @@ export default function Pricing() {
   const [showSuccess] = React.useState(false)
   const [showError, setShowError] = React.useState(false)
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null)
-  const [useOverlayCheckout, setUseOverlayCheckout] = React.useState(true)
+  const [useOverlayCheckout, setUseOverlayCheckout] = React.useState(false)
   // Billing modal no longer used; checkout session collects details
 
   // Load checkout preference from localStorage
@@ -360,7 +360,7 @@ export default function Pricing() {
         },
         body: JSON.stringify({
           // Let Checkout collect customer & billing details
-          customer: null,
+          customer: { email: session.user.email },
           product_cart: [
             {
               product_id: 'pdt_NdPHjHDApTZcOc9zBObJg', // Replace with your actual product ID
@@ -438,7 +438,7 @@ export default function Pricing() {
         },
         body: JSON.stringify({
           // Let Checkout collect customer & billing details
-          customer: null,
+          customer: { email: session.user.email },
           product_cart: [
             {
               product_id: billingFrequency === 'monthly' 
@@ -537,7 +537,7 @@ export default function Pricing() {
         },
         body: JSON.stringify({
           // Let Checkout collect customer & billing details
-          customer: null,
+          customer: { email: session.user.email },
           product_cart: [
             {
               product_id: 'pdt_xUvseunSwnTJL42kAZPau', // usage-based product ID

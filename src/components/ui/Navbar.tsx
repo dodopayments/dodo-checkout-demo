@@ -8,10 +8,50 @@ import Link from "next/link"
 import React from "react"
 import { DatabaseLogo } from "../../../public/DatabaseLogo"
 import { Button } from "../Button"
+import { useSession } from "next-auth/react"
+
+function useHasPaid() {
+  const { data: session } = useSession()
+  const [hasPaid, setHasPaid] = React.useState(false)
+  const [loading, setLoading] = React.useState(false)
+
+  React.useEffect(() => {
+    let aborted = false
+    async function check() {
+      if (!session?.user?.email) {
+        setHasPaid(false)
+        return
+      }
+      setLoading(true)
+      try {
+        const res = await fetch("/api/check-payment-status", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: session.user.email }),
+        })
+        const data = await res.json().catch(() => ({}))
+        if (!aborted) {
+          setHasPaid(Boolean(data?.hasPaid))
+        }
+      } catch {
+        if (!aborted) setHasPaid(false)
+      } finally {
+        if (!aborted) setLoading(false)
+      }
+    }
+    check()
+    return () => {
+      aborted = true
+    }
+  }, [session?.user?.email])
+
+  return { hasPaid, loading }
+}
 
 export function Navigation() {
   const scrolled = useScroll(15)
   const [open, setOpen] = React.useState(false)
+  const { hasPaid } = useHasPaid()
 
   React.useEffect(() => {
     const mediaQuery: MediaQueryList = window.matchMedia("(min-width: 768px)")
@@ -68,10 +108,16 @@ export function Navigation() {
             </div>
           </nav>
           <Button asChild className="hidden h-10 font-semibold md:flex">
-            <Link href={siteConfig.baseLinks.pricing}>Start generating</Link>
+            <Link href={hasPaid ? "/dashboard" : siteConfig.baseLinks.pricing}>
+              {hasPaid ? "Dashboard" : "Start generating"}
+            </Link>
           </Button>
           <div className="flex gap-x-2 md:hidden">
-            <Button>Start</Button>
+            <Button asChild>
+              <Link href={hasPaid ? "/dashboard" : siteConfig.baseLinks.pricing}>
+                {hasPaid ? "Dashboard" : "Start"}
+              </Link>
+            </Button>
             <Button
               onClick={() => setOpen(!open)}
               variant="light"

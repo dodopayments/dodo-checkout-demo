@@ -1,5 +1,3 @@
-// Tremor Input [v1.0.5]
-
 import { RiEyeFill, RiEyeOffFill, RiSearchLine } from "@remixicon/react"
 import React from "react"
 import { tv, type VariantProps } from "tailwind-variants"
@@ -71,7 +69,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
     const isSearch = type === "search"
 
     return (
-      <div className={cx("relative w-full", className)} tremor-id="tremor-raw">
+      <div className={cx("relative w-full", className)}>
         <input
           ref={forwardedRef}
           type={isPassword ? typeState : type}

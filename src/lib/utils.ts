@@ -5,8 +5,6 @@ export function cx(...args: ClassValue[]) {
   return twMerge(clsx(...args))
 }
 
-// Tremor Raw focusInput [v0.0.1]
-
 export const focusInput = [
   // base
   "focus:ring-2",
@@ -16,16 +14,12 @@ export const focusInput = [
   "focus:border-lime-500 focus:dark:border-lime-700",
 ]
 
-// Tremor Raw focusRing [v0.0.1]
-
 export const focusRing = [
   // base
   "outline outline-offset-2 outline-0 focus-visible:outline-2",
   // outline color
   "outline-lime-500 dark:outline-lime-500",
 ]
-
-// Tremor Raw hasErrorInput [v0.0.1]
 
 export const hasErrorInput = [
   // base

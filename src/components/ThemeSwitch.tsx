@@ -5,8 +5,6 @@ import { RiComputerLine, RiMoonLine, RiSunLine } from "@remixicon/react"
 import { useTheme } from "next-themes"
 import React, { useEffect, useState } from "react"
 
-// Based on Tremor Raw RadioGroup [v0.0.0]
-
 const RadioGroup = React.forwardRef<
   React.ElementRef<typeof RadioGroupPrimitives.Root>,
   React.ComponentPropsWithoutRef<typeof RadioGroupPrimitives.Root>

@@ -6,14 +6,6 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     
-    console.log('Webhook received:', JSON.stringify(body, null, 2))
-
-    // Verify webhook signature (recommended for production)
-    // const signature = request.headers.get('x-dodo-signature')
-    // if (!verifyWebhookSignature(body, signature)) {
-    //   return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
-    // }
-
     const eventType = body.event_type || body.type
     
     // Handle different event types
@@ -23,8 +15,6 @@ export async function POST(request: NextRequest) {
       await handleSubscriptionCreated(body)
     } else if (eventType === 'subscription.updated' || eventType === 'customer.subscription.updated') {
       await handleSubscriptionUpdated(body)
-    } else {
-      console.log('Unhandled event type:', eventType)
     }
 
     return NextResponse.json({ received: true })
@@ -98,32 +88,28 @@ async function handlePaymentSuccess(data: PaymentWebhookData) {
     paymentMetadata: metadata,
   }
 
-  // If it's a one-time purchase (Credit Pack), add credits to the user's balance
-  if (paymentType === 'one-time') {
-    const creditsToAdd = 10 // Credit Pack gives 10 credits
+  // If it's a Credit Pack purchase, add credits to the user's balance
+  // Only add credits if this payment hasn't been processed yet (check by payment ID)
+  if (paymentType === 'one-time' && (metadata.plan === 'Credit Pack' || typeof metadata.credits !== 'undefined')) {
+    const paymentId = data.payment_id || data.id || data.data?.object?.id
     
-    // Get current user to find existing credits
+    // Get current user to check if this payment was already processed
     const user = await usersCollection.findOne({ email: customerEmail })
-    const currentCredits = user?.totalCredits || 0
     
-    updateData.totalCredits = currentCredits + creditsToAdd
-    console.log(`Adding ${creditsToAdd} credits. Previous: ${currentCredits}, New: ${currentCredits + creditsToAdd}`)
+    // Only add credits if this is a new payment (payment ID doesn't match last processed payment)
+    if (user?.lastPaymentId !== paymentId) {
+      const creditsToAdd = Number(metadata.credits ?? 10)
+      const currentCredits = user?.totalCredits || 0
+      updateData.totalCredits = currentCredits + creditsToAdd
+    }
   }
 
   // Update user record
-  const updateResult = await usersCollection.updateOne(
+  await usersCollection.updateOne(
     { email: customerEmail },
     { $set: updateData, $setOnInsert: { email: customerEmail } },
     { upsert: true }
   )
-
-  console.log('User payment status updated:', {
-    email: customerEmail,
-    paymentType,
-    matched: updateResult.matchedCount,
-    modified: updateResult.modifiedCount,
-    creditsAdded: paymentType === 'one-time' ? updateData.totalCredits : undefined,
-  })
 }
 
 async function handleSubscriptionCreated(data: PaymentWebhookData) {
@@ -159,12 +145,6 @@ async function handleSubscriptionCreated(data: PaymentWebhookData) {
     },
     { upsert: true }
   )
-
-  console.log('User subscription created:', {
-    email: customerEmail,
-    paymentType,
-    subscriptionId: data.subscription_id || data.id,
-  })
 }
 
 async function handleSubscriptionUpdated(data: PaymentWebhookData) {
@@ -193,11 +173,6 @@ async function handleSubscriptionUpdated(data: PaymentWebhookData) {
     },
     { upsert: true }
   )
-
-  console.log('User subscription updated:', {
-    email: customerEmail,
-    status,
-  })
 }
 
 function determinePaymentType(

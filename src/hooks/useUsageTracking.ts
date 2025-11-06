@@ -144,7 +144,6 @@ export function withUsageTracking<T extends (...args: unknown[]) => Promise<unkn
       const customerId = sessionStorage.getItem('dodo_customer_id')
       
       if (!customerId) {
-        console.warn('Cannot track usage: Customer ID not found')
         return result
       }
 

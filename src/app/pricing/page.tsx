@@ -252,7 +252,7 @@ export default function Pricing() {
     "monthly" | "annually"
   >("monthly")
   const [isLoading, setIsLoading] = React.useState<string | null>(null)
-  const [showSuccess, setShowSuccess] = React.useState(false)
+  const [showSuccess] = React.useState(false)
   const [showError, setShowError] = React.useState(false)
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null)
   const [useOverlayCheckout, setUseOverlayCheckout] = React.useState(true)
@@ -279,31 +279,20 @@ export default function Pricing() {
     DodoPayments.Initialize({
       mode: "test", // Change to 'live' for production
       onEvent: (event) => {
-        console.log("Checkout event:", event)
-        
         switch (event.event_type) {
           case "checkout.opened":
-            console.log("Checkout overlay opened")
             break
           case "checkout.payment_page_opened":
-            console.log("Payment page displayed")
             break
           case "checkout.customer_details_submitted":
-            console.log("Customer details submitted")
             break
           case "checkout.closed":
-            console.log("Checkout closed")
             setIsLoading(null)
             break
           case "checkout.redirect":
-            console.log("Checkout redirect:", event.data)
             // Handle successful payment
             if (event.data?.type === "success") {
-              setShowSuccess(true)
-              setTimeout(() => {
-                setShowSuccess(false)
-                router.push("/dashboard") // Redirect to dashboard or success page
-              }, 3000)
+              router.push("/dashboard")
             } else if (event.data?.type === "failure") {
               setShowError(true)
               setTimeout(() => setShowError(false), 5000)
@@ -340,11 +329,7 @@ export default function Pricing() {
           })
           const data = await res.json()
           if (res.ok && data?.success) {
-            setShowSuccess(true)
-            setTimeout(() => {
-              setShowSuccess(false)
-              router.push('/dashboard')
-            }, 2000)
+            router.push('/dashboard')
           }
         } catch {
           // ignore
@@ -559,8 +544,6 @@ export default function Pricing() {
 
       const data = await response.json()
 
-      console.log('Checkout Session API Response:', { status: response.status, data })
-
       if (data.success && data.checkout_url) {
         if (data.session_id) {
           localStorage.setItem('pending_checkout_session_id', data.session_id)
@@ -584,9 +567,6 @@ export default function Pricing() {
         else if (data.details?.message) errorMessage = data.details.message
         else if (data.error) errorMessage = data.error
         else if (data.details?.code) errorMessage = `Error code: ${data.details.code}`
-        
-        console.error('Extracted error message:', errorMessage)
-        console.error('Full error data:', JSON.stringify(data, null, 2))
         
         setErrorMessage(`Usage-Based Billing Error: ${errorMessage}`)
         setShowError(true)

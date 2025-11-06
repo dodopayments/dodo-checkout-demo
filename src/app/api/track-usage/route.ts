@@ -64,11 +64,7 @@ export async function POST(request: NextRequest) {
         lastActivityDate: new Date(),
       },
     }
-    const updateResult = await usersCollection.updateOne({ email }, updateDoc)
-
-    if (updateResult.modifiedCount === 0) {
-      console.warn('No documents were modified')
-    }
+    await usersCollection.updateOne({ email }, updateDoc)
 
     // Fetch updated user data
     const updatedUser = await usersCollection.findOne({ email })

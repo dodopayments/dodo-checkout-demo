@@ -5,6 +5,12 @@ import type { Collection, UpdateFilter } from 'mongodb'
 type UserDoc = {
   email: string
   paymentType?: 'usage-based' | 'one-time' | 'subscription'
+  paymentMetadata?: {
+    plan?: string
+    billing_frequency?: string
+    billing_type?: string
+    [key: string]: unknown
+  }
   imagesGenerated?: number
   totalUsageCost?: number
   lastImageGenerated?: Date
@@ -38,15 +44,26 @@ export async function POST(request: NextRequest) {
     }
 
     // Calculate cost based on payment type
+    // Only track usage cost for usage-based plans
+    const metadata = user.paymentMetadata || {}
+    const plan = metadata.plan
+    const billingType = metadata.billing_type
+    const billingFrequency = metadata.billing_frequency
+    
+    // Determine if plan is usage-based
+    // Don't count totalUsageCost for subscription plans like "Unlimited Pro"
+    // If plan is "Unlimited Pro" or has billing_frequency (monthly/annual), it's a subscription, not usage-based
+    const isSubscriptionPlan = plan === 'Unlimited Pro' || billingFrequency === 'monthly' || billingFrequency === 'annual'
+    const isUsageBased = 
+      !isSubscriptionPlan && (
+        billingType === 'usage_based' || 
+        plan === 'Pay Per Image' ||
+        (user.paymentType === 'usage-based' && !isSubscriptionPlan)
+      )
+    
     let cost = 0
-    const paymentType = user.paymentType || 'usage-based'
-
-    if (paymentType === 'usage-based') {
+    if (isUsageBased) {
       cost = 0.75 // Pay per image
-    } else if (paymentType === 'one-time') {
-      cost = 0.70 // Credit pack ($7 for 10 images)
-    } else if (paymentType === 'subscription') {
-      cost = 0 // Unlimited
     }
 
     // We no longer store per-image usageHistory to avoid duplication
@@ -56,12 +73,15 @@ export async function POST(request: NextRequest) {
     const currentTotalCost = user.totalUsageCost || 0
 
     // Update user with new usage data
+    // Only update totalUsageCost for usage-based plans
     const updateDoc: UpdateFilter<UserDoc> = {
       $set: {
         imagesGenerated: currentImagesGenerated + 1,
-        totalUsageCost: Number((currentTotalCost + cost).toFixed(2)),
         lastImageGenerated: new Date(),
         lastActivityDate: new Date(),
+        ...(isUsageBased && {
+          totalUsageCost: Number((currentTotalCost + cost).toFixed(2)),
+        }),
       },
     }
     await usersCollection.updateOne({ email }, updateDoc)

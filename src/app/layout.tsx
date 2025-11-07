@@ -14,7 +14,7 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://dodoai.studio"),
+  metadataBase: new URL("https://atlas.dodopayments.com/"),
   title: siteConfig.name,
   description: siteConfig.description,
   keywords: [

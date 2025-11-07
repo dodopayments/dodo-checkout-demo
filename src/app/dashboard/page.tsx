@@ -268,19 +268,32 @@ export default function Dashboard() {
     setIsGenerating(true)
 
     try {
+      // Determine max resolution based on plan
+      const getPlanResolution = () => {
+        const type = paymentStatus.paymentType
+        if (type === 'subscription') {
+          return { width: 4096, height: 4096, label: '4096x4096' }
+        }
+        if (type === 'one-time') {
+          return { width: 2048, height: 2048, label: '2048x2048' }
+        }
+        // Default and usage-based
+        return { width: 1024, height: 1024, label: '1024x1024' }
+      }
+      const res = getPlanResolution()
       // Simulate image generation (replace with actual API)
       await new Promise(resolve => setTimeout(resolve, 2000))
 
       // Generate a placeholder image URL using picsum.photos
       const imageId = Math.floor(Math.random() * 1000)
-      const imageUrl = `https://picsum.photos/seed/${imageId}/1024/1024`
+      const imageUrl = `https://picsum.photos/seed/${imageId}/${res.width}/${res.height}`
 
       const newImage: GeneratedImage = {
         id: `img_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         url: imageUrl,
         prompt: prompt,
         timestamp: new Date(),
-        resolution: '1024x1024',
+        resolution: res.label,
         style: 'standard',
       }
 
@@ -300,7 +313,7 @@ export default function Dashboard() {
             imageData: {
               imageId: newImage.id,
               prompt: prompt.substring(0, 100),
-              resolution: '1024x1024',
+              resolution: res.label,
               style: 'standard',
             },
           }),
@@ -325,7 +338,7 @@ export default function Dashboard() {
       if (planConfig.name === 'Pay Per Image' && paymentStatus.paymentType === 'usage-based') {
         const tracked = await trackUsage('image.generation', {
           prompt: prompt.substring(0, 100),
-          resolution: '1024x1024',
+          resolution: res.label,
           style: 'standard',
           model: 'stable-diffusion',
         })

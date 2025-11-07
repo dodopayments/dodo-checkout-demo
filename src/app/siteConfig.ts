@@ -1,6 +1,6 @@
 export const siteConfig = {
-  name: "Dodo AI Studio",
-  url: "https://dodoai.studio",
+  name: "Dodo Atlas Studio",
+  url: "https://atlas.dodopayments.com/",
   description: "Generate stunning AI art in seconds. Pay per image, upgrade for more.",
   images: ["/images/hero-light.webp"],
   baseLinks: {

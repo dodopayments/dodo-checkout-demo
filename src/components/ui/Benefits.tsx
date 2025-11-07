@@ -47,7 +47,7 @@ export default function Benefits() {
         id="benefits-title"
         className="inline-block bg-gradient-to-t from-gray-900 to-gray-800 bg-clip-text py-2 text-4xl font-bold tracking-tighter text-transparent md:text-5xl dark:from-gray-50 dark:to-gray-300"
       >
-        Why choose Dodo AI Studio
+        Why choose Dodo Atlas Studio
       </h2>
       <dl className="mt-8 grid grid-cols-4 gap-x-10 gap-y-8 sm:mt-12 sm:gap-y-10">
         {benefits.map((benefit, index) => (

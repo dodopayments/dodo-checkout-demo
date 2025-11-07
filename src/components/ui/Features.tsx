@@ -30,7 +30,7 @@ export default function Features() {
         Lightning-fast AI art generation
       </h2>
       <p className="mt-6 max-w-3xl text-lg leading-7 text-gray-600 dark:text-gray-400">
-        Powered by cutting-edge AI models, Dodo AI Studio transforms your creative 
+        Powered by cutting-edge AI models, Dodo Atlas Studio transforms your creative 
         vision into stunning artwork in seconds. Our advanced infrastructure ensures 
         consistent quality and blazing-fast generation speeds for all your artistic needs.
       </p>

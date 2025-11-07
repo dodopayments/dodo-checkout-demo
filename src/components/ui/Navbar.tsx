@@ -81,7 +81,7 @@ export function Navigation() {
         <div className="relative flex items-center justify-between">
           <Link href={siteConfig.baseLinks.home} aria-label="Home">
             <span className="sr-only">Company logo</span>
-            <DatabaseLogo className="w-28 md:w-32" />
+            <DatabaseLogo className="w-56 md:w-64" />
           </Link>
           <nav className="hidden md:absolute md:left-1/2 md:top-1/2 md:block md:-translate-x-1/2 md:-translate-y-1/2 md:transform">
             <div className="flex items-center gap-10 font-medium">

@@ -3,7 +3,7 @@ import type { SVGProps } from "react"
 export const DatabaseLogo = (props: SVGProps<SVGSVGElement>) => {
   const { className, ...rest } = props
   return (
-  <svg aria-hidden="true" fill="none" viewBox="0 0 200 44" {...rest} className={`${className ?? ''} text-black dark:text-white`}>
+  <svg aria-hidden="true" fill="none" viewBox="0 0 360 44" preserveAspectRatio="xMidYMid meet" {...rest} className={`${className ?? ''} text-black dark:text-white`}>
     <mask
       id="mask0_9418_64"
       width={44}
@@ -44,7 +44,7 @@ export const DatabaseLogo = (props: SVGProps<SVGSVGElement>) => {
       />
     </g>
     <text x="54" y="24" dominantBaseline="middle" fill="currentColor" fontSize="28" fontWeight="700" letterSpacing="0.5">
-      AI Studio
+      Atlas Studio
     </text>
   </svg>
 )}

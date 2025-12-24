@@ -39,12 +39,12 @@ function CheckoutPageContent() {
   // Ref to ensure SDK is only initialized once
   const initializedRef = useRef(false);
 
-  // Get checkout URL from query params or sessionStorage
+  // Get checkout URL from query params or localStorage
   // This allows the checkout to work both on direct navigation and after redirect
   const checkoutUrl =
     searchParams.get("checkout_url") ||
     (typeof window !== "undefined"
-      ? sessionStorage.getItem("pending_checkout_url")
+      ? localStorage.getItem("pending_checkout_url")
       : null);
 
   /**
@@ -138,7 +138,7 @@ function CheckoutPageContent() {
               // Payment was successful after redirect
               const sessionId =
                 typeof window !== "undefined"
-                  ? sessionStorage.getItem("pending_checkout_session_id")
+                  ? localStorage.getItem("pending_checkout_session_id")
                   : null;
               // Verify payment with backend if session ID and user email are available
               if (sessionId && session?.user?.email) {
@@ -223,7 +223,7 @@ function CheckoutPageContent() {
     return () => {
       clearTimeout(loadingTimeout);
       if (typeof window !== "undefined") {
-        sessionStorage.removeItem("pending_checkout_url");
+        localStorage.removeItem("pending_checkout_url");
       }
       try {
         DodoPayments.Checkout.close();

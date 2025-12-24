@@ -415,7 +415,7 @@ export default function Pricing() {
         if (useInlineCheckout) {
           // INLINE CHECKOUT: Store checkout URL and navigate to dedicated checkout page
           // The checkout will be embedded inline on /checkout page
-          sessionStorage.setItem("pending_checkout_url", url);
+          localStorage.setItem("pending_checkout_url", url);
           router.push(`/checkout?checkout_url=${encodeURIComponent(url)}`);
         } else if (useOverlayCheckout) {
           DodoPayments.Checkout.open({
@@ -515,7 +515,7 @@ export default function Pricing() {
         if (useInlineCheckout) {
           // INLINE CHECKOUT: Store checkout URL and navigate to dedicated checkout page
           // The checkout will be embedded inline on /checkout page
-          sessionStorage.setItem("pending_checkout_url", url);
+          localStorage.setItem("pending_checkout_url", url);
           router.push(`/checkout?checkout_url=${encodeURIComponent(url)}`);
         } else if (useOverlayCheckout) {
           // OVERLAY CHECKOUT: Open checkout in a modal overlay on current page
@@ -631,7 +631,7 @@ export default function Pricing() {
         if (useInlineCheckout) {
           // INLINE CHECKOUT: Store checkout URL and navigate to dedicated checkout page
           // The checkout will be embedded inline on /checkout page
-          sessionStorage.setItem("pending_checkout_url", url);
+          localStorage.setItem("pending_checkout_url", url);
           router.push(`/checkout?checkout_url=${encodeURIComponent(url)}`);
         } else if (useOverlayCheckout) {
           // OVERLAY CHECKOUT: Open checkout in a modal overlay on current page

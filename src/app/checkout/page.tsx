@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { DodoPayments } from "dodopayments-checkout";
@@ -21,11 +21,11 @@ interface CheckoutBreakdownData {
 }
 
 /**
- * CheckoutPage Component
+ * CheckoutPageContent Component
  * Displays an inline checkout form using Dodo Payments SDK
  * Handles payment verification and redirects after successful payment
  */
-export default function CheckoutPage() {
+function CheckoutPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: session } = useSession();
@@ -396,5 +396,32 @@ export default function CheckoutPage() {
         </div>
       </div>
     </>
+  );
+}
+
+/**
+ * CheckoutPage Component
+ * Wraps CheckoutPageContent in Suspense boundary for useSearchParams
+ */
+export default function CheckoutPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="mt-36 flex flex-col overflow-hidden px-3 pt-20">
+          <div className="min-h-screen max-w-6xl mx-auto">
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-50">
+                Complete Your Purchase
+              </h1>
+              <p className="mt-2 text-gray-600 dark:text-gray-400">
+                Loading checkout...
+              </p>
+            </div>
+          </div>
+        </div>
+      }
+    >
+      <CheckoutPageContent />
+    </Suspense>
   );
 }

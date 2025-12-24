@@ -104,7 +104,9 @@ function CheckoutPageContent() {
 
     // Set timeout to log warning if checkout doesn't open within 10 seconds
     const loadingTimeout = setTimeout(() => {
-      console.warn("Checkout did not open within timeout period");
+      if (process.env.NODE_ENV === "development") {
+        console.warn("Checkout did not open within timeout period");
+      }
     }, 10000);
 
     // Initialize Dodo Payments SDK with inline display type
@@ -112,27 +114,32 @@ function CheckoutPageContent() {
       mode: "test", // Change to "live" for production
       displayType: "inline", // Display checkout inline in the page
       onEvent: (event) => {
-        console.log("Checkout event:", event.event_type, event.data);
+        if (process.env.NODE_ENV === "development") {
+          console.log("Checkout event:", event.event_type, event.data);
+        }
         switch (event.event_type) {
           case "checkout.opened":
             // Checkout successfully opened
             clearTimeout(loadingTimeout);
-            console.log("Checkout opened successfully");
+            if (process.env.NODE_ENV === "development") {
+              console.log("Checkout opened successfully");
+            }
             break;
 
-          case "checkout.breakdown":
+          case "checkout.breakdown": {
             // Update order breakdown when pricing details change
             const message = event.data?.message as CheckoutBreakdownData;
             if (message) {
               setBreakdown(message);
             }
             break;
+          }
 
           case "checkout.customer_details_submitted":
             // Customer has submitted their details (no action needed)
             break;
 
-          case "checkout.redirect":
+          case "checkout.redirect": {
             // Handle redirect scenarios (e.g., 3DS authentication, bank pages)
             if (event.data?.type === "success") {
               // Payment was successful after redirect
@@ -159,7 +166,9 @@ function CheckoutPageContent() {
                     }
                   })
                   .catch((err) => {
-                    console.error("Error verifying payment:", err);
+                    if (process.env.NODE_ENV === "development") {
+                      console.error("Error verifying payment:", err);
+                    }
                     setError("Error verifying payment");
                   });
               } else {
@@ -171,17 +180,21 @@ function CheckoutPageContent() {
               setError("Payment failed. Please try again.");
             }
             break;
+          }
 
-          case "checkout.error":
+          case "checkout.error": {
             // Handle checkout errors
             clearTimeout(loadingTimeout);
-            console.error("Checkout error:", event.data?.message);
+            if (process.env.NODE_ENV === "development") {
+              console.error("Checkout error:", event.data?.message);
+            }
             const errorMessage =
               typeof event.data?.message === "string"
                 ? event.data.message
                 : "An error occurred during checkout";
             setError(errorMessage);
             break;
+          }
 
           case "checkout.closed":
             // Checkout was closed by user (no action needed)
@@ -198,14 +211,18 @@ function CheckoutPageContent() {
       if (checkoutUrl) {
         const element = document.getElementById("dodo-inline-checkout");
         if (element) {
-          console.log("Opening checkout with URL:", checkoutUrl);
+          if (process.env.NODE_ENV === "development") {
+            console.log("Opening checkout with URL:", checkoutUrl);
+          }
           try {
             DodoPayments.Checkout.open({
               checkoutUrl,
               elementId: "dodo-inline-checkout",
             });
           } catch (error) {
-            console.error("Error opening checkout:", error);
+            if (process.env.NODE_ENV === "development") {
+              console.error("Error opening checkout:", error);
+            }
             setError("Failed to initialize checkout. Please try again.");
             clearTimeout(loadingTimeout);
           }

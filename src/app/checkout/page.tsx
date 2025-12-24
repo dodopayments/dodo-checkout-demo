@@ -70,7 +70,15 @@ function CheckoutPageContent() {
           sessionId,
         }),
       })
-        .then((res) => res.json())
+        .then(async (res) => {
+          if (!res.ok) {
+            const errorText = await res.text().catch(() => "Unknown error");
+            throw new Error(
+              `Payment verification failed: ${res.status} ${res.statusText}${errorText ? ` - ${errorText}` : ""}`
+            );
+          }
+          return res.json();
+        })
         .then((data) => {
           if (data?.success) {
             router.push("/dashboard");
@@ -78,8 +86,13 @@ function CheckoutPageContent() {
             setError("Payment verification failed");
           }
         })
-        .catch(() => {
-          setError("Error verifying payment");
+        .catch((err) => {
+          const errorMessage =
+            err instanceof Error ? err.message : "Error verifying payment";
+          setError(errorMessage);
+          if (process.env.NODE_ENV === "development") {
+            console.error("Payment verification error:", err);
+          }
         });
     } else if (errorParam) {
       // Show error if payment failed
@@ -157,7 +170,17 @@ function CheckoutPageContent() {
                     sessionId,
                   }),
                 })
-                  .then((res) => res.json())
+                  .then(async (res) => {
+                    if (!res.ok) {
+                      const errorText = await res
+                        .text()
+                        .catch(() => "Unknown error");
+                      throw new Error(
+                        `Payment verification failed: ${res.status} ${res.statusText}${errorText ? ` - ${errorText}` : ""}`
+                      );
+                    }
+                    return res.json();
+                  })
                   .then((data) => {
                     if (data?.success) {
                       router.push("/dashboard");
@@ -166,14 +189,18 @@ function CheckoutPageContent() {
                     }
                   })
                   .catch((err) => {
+                    const errorMessage =
+                      err instanceof Error
+                        ? err.message
+                        : "Error verifying payment";
+                    setError(errorMessage);
                     if (process.env.NODE_ENV === "development") {
                       console.error("Error verifying payment:", err);
                     }
-                    setError("Error verifying payment");
                   });
               } else {
-                // Redirect to dashboard even without verification if no session data
-                router.push("/dashboard");
+                // Show error if unable to verify payment
+                setError("Unable to verify payment. Please contact support.");
               }
             } else if (event.data?.type === "failure") {
               // Payment failed after redirect
@@ -207,6 +234,8 @@ function CheckoutPageContent() {
      * Function to open checkout in the inline element
      * Retries if DOM element is not ready yet
      */
+    let retryCount = 0;
+    const MAX_RETRIES = 50; // 5 seconds max (50 * 100ms)
     const openCheckout = () => {
       if (checkoutUrl) {
         const element = document.getElementById("dodo-inline-checkout");
@@ -228,7 +257,19 @@ function CheckoutPageContent() {
           }
         } else {
           // Retry after 100ms if element is not found
-          setTimeout(openCheckout, 100);
+          if (retryCount < MAX_RETRIES) {
+            retryCount++;
+            setTimeout(openCheckout, 100);
+          } else {
+            // Max retries reached, stop retrying and show error
+            clearTimeout(loadingTimeout);
+            setError("Failed to load checkout. Please refresh the page.");
+            if (process.env.NODE_ENV === "development") {
+              console.error(
+                `Failed to find checkout element after ${MAX_RETRIES} attempts`
+              );
+            }
+          }
         }
       }
     };

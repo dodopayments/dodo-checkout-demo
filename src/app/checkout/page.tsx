@@ -21,6 +21,33 @@ interface CheckoutBreakdownData {
 }
 
 /**
+ * Verify payment with the backend API
+ * @param email - User's email address
+ * @param sessionId - Payment session ID
+ * @returns Promise resolving to verification response with success status and optional message
+ * @throws Error if the API request fails
+ */
+async function verifyPayment(
+  email: string,
+  sessionId: string
+): Promise<{ success: boolean; message?: string }> {
+  const res = await fetch("/api/verify-payment", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, sessionId }),
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text().catch(() => "Unknown error");
+    throw new Error(
+      `Payment verification failed: ${res.status} ${res.statusText}${errorText ? ` - ${errorText}` : ""}`
+    );
+  }
+
+  return res.json();
+}
+
+/**
  * CheckoutPageContent Component
  * Displays an inline checkout form using Dodo Payments SDK
  * Handles payment verification and redirects after successful payment
@@ -62,23 +89,7 @@ function CheckoutPageContent() {
 
     // If payment was successful, verify it with the backend
     if (success === "true" && sessionId && session?.user?.email) {
-      fetch("/api/verify-payment", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: session.user.email,
-          sessionId,
-        }),
-      })
-        .then(async (res) => {
-          if (!res.ok) {
-            const errorText = await res.text().catch(() => "Unknown error");
-            throw new Error(
-              `Payment verification failed: ${res.status} ${res.statusText}${errorText ? ` - ${errorText}` : ""}`
-            );
-          }
-          return res.json();
-        })
+      verifyPayment(session.user.email, sessionId)
         .then((data) => {
           if (data?.success) {
             router.push("/dashboard");
@@ -162,25 +173,7 @@ function CheckoutPageContent() {
                   : null;
               // Verify payment with backend if session ID and user email are available
               if (sessionId && session?.user?.email) {
-                fetch("/api/verify-payment", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    email: session.user.email,
-                    sessionId,
-                  }),
-                })
-                  .then(async (res) => {
-                    if (!res.ok) {
-                      const errorText = await res
-                        .text()
-                        .catch(() => "Unknown error");
-                      throw new Error(
-                        `Payment verification failed: ${res.status} ${res.statusText}${errorText ? ` - ${errorText}` : ""}`
-                      );
-                    }
-                    return res.json();
-                  })
+                verifyPayment(session.user.email, sessionId)
                   .then((data) => {
                     if (data?.success) {
                       router.push("/dashboard");
@@ -312,7 +305,7 @@ function CheckoutPageContent() {
   };
 
   // Determine currency to use for display (prefer finalTotalCurrency, fallback to currency, then USD)
-  const currency = breakdown.currency ?? breakdown.finalTotalCurrency ?? "USD";
+  const currency = breakdown.finalTotalCurrency ?? breakdown.currency ?? "USD";
 
   return (
     <>

@@ -3,22 +3,8 @@
 import { useEffect, useState, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { DodoPayments } from "dodopayments-checkout";
+import { DodoPayments, CheckoutBreakdownData } from "dodopayments-checkout";
 import DemoBottomPopup from "@/components/ui/DemoBottomPopup";
-
-/**
- * Interface for checkout breakdown data received from Dodo Payments SDK
- * All amounts are in cents (smallest currency unit)
- */
-interface CheckoutBreakdownData {
-  subTotal?: number;
-  discount?: number;
-  tax?: number;
-  total?: number;
-  currency?: string;
-  finalTotal?: number;
-  finalTotalCurrency?: string;
-}
 
 /**
  * Verify payment with the backend API

@@ -261,22 +261,21 @@ export default function Pricing() {
   const [useInlineCheckout, setUseInlineCheckout] = React.useState(false);
   // Billing modal no longer used; checkout session collects details
 
-  // Load checkout preference from localStorage
+  // Load checkout mode from localStorage
   React.useEffect(() => {
-    const savedPreference = localStorage.getItem("checkout_preference");
-    if (savedPreference !== null) {
-      setUseOverlayCheckout(savedPreference === "overlay");
+    const savedMode = localStorage.getItem("checkout_mode");
+    if (savedMode) {
+      if (savedMode === "redirect") {
+        setUseInlineCheckout(false);
+        setUseOverlayCheckout(false);
+      } else if (savedMode === "overlay") {
+        setUseInlineCheckout(false);
+        setUseOverlayCheckout(true);
+      } else if (savedMode === "inline") {
+        setUseInlineCheckout(true);
+      }
     }
   }, []);
-
-  // Save checkout preference to localStorage
-  const handleCheckoutPreferenceChange = (useOverlay: boolean) => {
-    setUseOverlayCheckout(useOverlay);
-    localStorage.setItem(
-      "checkout_preference",
-      useOverlay ? "overlay" : "redirect"
-    );
-  };
 
   // No-op: checkout collects billing/customer if not provided
 
@@ -791,12 +790,12 @@ export default function Pricing() {
             animationFillMode: "backwards",
           }}
         >
-          <div className="flex flex-col items-center justify-center gap-4 sm:flex-row sm:gap-8 mb-6">
+          <div className="flex flex-row items-center justify-center gap-6 mb-6">
             {/* Billing Frequency Toggle */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <Label
                 htmlFor="billing-switch"
-                className="text-sm font-medium dark:text-gray-400"
+                className="text-sm font-medium text-gray-700 dark:text-gray-300"
               >
                 Monthly
               </Label>
@@ -811,57 +810,53 @@ export default function Pricing() {
               />
               <Label
                 htmlFor="billing-switch"
-                className="text-sm font-medium dark:text-gray-400"
+                className="text-sm font-medium text-gray-700 dark:text-gray-300"
               >
-                Yearly (-20%)
+                Yearly <span className="text-lime-600 font-semibold">(-20%)</span>
               </Label>
             </div>
 
-            {/* Vertical Divider - Hidden on mobile, shown on desktop */}
-            <div className="hidden h-6 w-px bg-gray-300 sm:block dark:bg-gray-700" />
-
-            {/* Checkout Experience Toggle */}
-            <div className="flex items-center gap-2">
-              <Label
-                htmlFor="checkout-switch"
-                className="text-sm font-medium dark:text-gray-400"
-              >
-                Redirect Checkout
-              </Label>
-              <Switch
-                id="checkout-switch"
-                checked={useOverlayCheckout}
-                onCheckedChange={handleCheckoutPreferenceChange}
-              />
-              <Label
-                htmlFor="checkout-switch"
-                className="text-sm font-medium dark:text-gray-400"
-              >
-                Overlay Checkout
-              </Label>
-            </div>
-
-            {/* Inline Checkout Toggle */}
-            {/* When enabled: checkout is embedded inline on a dedicated /checkout page */}
-            {/* When disabled: uses overlay (modal) or redirect checkout */}
-            <div className="flex items-center gap-2">
-              <Label
-                htmlFor="inline-checkout-switch"
-                className="text-sm font-medium dark:text-gray-400"
-              >
-                Redirect Checkout
-              </Label>
-              <Switch
-                id="inline-checkout-switch"
-                checked={useInlineCheckout}
-                onCheckedChange={setUseInlineCheckout}
-              />
-              <Label
-                htmlFor="inline-checkout-switch"
-                className="text-sm font-medium dark:text-gray-400"
-              >
-                Inline Checkout
-              </Label>
+            {/* Checkout Mode Selector */}
+            <div className="flex items-center gap-4">
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Checkout Mode:</span>
+              <div className="flex items-center gap-2">
+                {[
+                  { value: "redirect", label: "Redirect" },
+                  { value: "overlay", label: "Overlay" },
+                  { value: "inline", label: "Inline" }
+                ].map((mode) => (
+                  <button
+                    key={mode.value}
+                    onClick={() => {
+                      if (mode.value === "redirect") {
+                        setUseInlineCheckout(false);
+                        setUseOverlayCheckout(false);
+                      } else if (mode.value === "overlay") {
+                        setUseInlineCheckout(false);
+                        setUseOverlayCheckout(true);
+                      } else if (mode.value === "inline") {
+                        setUseInlineCheckout(true);
+                        // overlay preference doesn't matter for inline
+                      }
+                      // Save to localStorage
+                      localStorage.setItem("checkout_mode", mode.value);
+                    }}
+                    className={cx(
+                      "px-3 py-1.5 text-xs font-medium rounded-full transition-all duration-200",
+                      (() => {
+                        const currentMode =
+                          useInlineCheckout ? "inline" :
+                          useOverlayCheckout ? "overlay" : "redirect";
+                        return currentMode === mode.value
+                          ? "bg-lime-600 text-white shadow-sm"
+                          : "bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700";
+                      })()
+                    )}
+                  >
+                    {mode.label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 

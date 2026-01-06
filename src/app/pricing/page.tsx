@@ -5,6 +5,7 @@ import { Label } from "@/components/Label";
 import { Switch } from "@/components/Switch";
 import { Tooltip } from "@/components/Tooltip";
 import { ArrowAnimated } from "@/components/ui/ArrowAnimated";
+import { AuthChoiceModal } from "@/components/ui/AuthChoiceModal";
 import DemoBottomPopup from "@/components/ui/DemoBottomPopup";
 import { Faqs } from "@/components/ui/Faqs";
 import Testimonial from "@/components/ui/Testimonial";
@@ -260,6 +261,10 @@ export default function Pricing() {
   // When false, uses overlay (modal) or redirect checkout
   const [useInlineCheckout, setUseInlineCheckout] = React.useState(false);
   // Billing modal no longer used; checkout session collects details
+  const [showAuthModal, setShowAuthModal] = React.useState(false);
+  const [pendingPlan, setPendingPlan] = React.useState<string | null>(null);
+  const [pendingCheckoutCallback, setPendingCheckoutCallback] =
+    React.useState<(() => Promise<void>) | null>(null);
 
   // Load checkout mode from localStorage
   React.useEffect(() => {
@@ -355,10 +360,17 @@ export default function Pricing() {
 
     // Check if user is logged in
     if (!session?.user?.email) {
-      router.push("/auth/signin?callbackUrl=/pricing");
+      setPendingPlan(planName);
+      setPendingCheckoutCallback(() => proceedWithBuyCredits);
+      setShowAuthModal(true);
       return;
     }
 
+    await proceedWithBuyCredits();
+  };
+
+  const proceedWithBuyCredits = async () => {
+    const planName = "Credit Pack";
     setIsLoading(planName);
 
     try {
@@ -370,7 +382,6 @@ export default function Pricing() {
         },
         body: JSON.stringify({
           // Let Checkout collect customer & billing details
-          customer: { email: session.user.email },
           product_cart: [
             {
               product_id: "pdt_NdPHjHDApTZcOc9zBObJg", // Replace with your actual product ID
@@ -450,10 +461,17 @@ export default function Pricing() {
 
     // Check if user is logged in
     if (!session?.user?.email) {
-      router.push("/auth/signin?callbackUrl=/pricing");
+      setPendingPlan(planName);
+      setPendingCheckoutCallback(() => proceedWithSubscribe);
+      setShowAuthModal(true);
       return;
     }
 
+    await proceedWithSubscribe();
+  };
+
+  const proceedWithSubscribe = async () => {
+    const planName = "Unlimited Pro";
     setIsLoading(planName);
 
     try {
@@ -465,7 +483,6 @@ export default function Pricing() {
         },
         body: JSON.stringify({
           // Let Checkout collect customer & billing details
-          customer: { email: session.user.email },
           product_cart: [
             {
               product_id:
@@ -546,15 +563,8 @@ export default function Pricing() {
     }
   };
 
-  const handleUsageBased = async (planName: string) => {
-    if (planName !== "Pay Per Image") return;
-
-    // Check if user is logged in
-    if (!session?.user?.email) {
-      router.push("/auth/signin?callbackUrl=/pricing");
-      return;
-    }
-
+  const proceedWithUsageBased = async () => {
+    const planName = "Pay Per Image";
     setIsLoading(planName);
 
     try {
@@ -585,7 +595,6 @@ export default function Pricing() {
         },
         body: JSON.stringify({
           // Let Checkout collect customer & billing details
-          customer: { email: session.user.email },
           product_cart: [
             {
               product_id: "pdt_xUvseunSwnTJL42kAZPau", // usage-based product ID
@@ -666,7 +675,41 @@ export default function Pricing() {
     }
   };
 
+  const handleUsageBased = async (planName: string) => {
+    if (planName !== "Pay Per Image") return;
+
+    // Check if user is logged in
+    if (!session?.user?.email) {
+      setPendingPlan(planName);
+      setPendingCheckoutCallback(() => proceedWithUsageBased);
+      setShowAuthModal(true);
+      return;
+    }
+
+    await proceedWithUsageBased();
+  };
+
   // Billing submission handler removed; checkout collects data
+
+  const handleModalSignIn = () => {
+    setShowAuthModal(false);
+    router.push("/auth/signin?callbackUrl=/pricing");
+  };
+
+  const handleModalContinueAsGuest = async () => {
+    setShowAuthModal(false);
+    if (pendingCheckoutCallback) {
+      await pendingCheckoutCallback();
+    }
+    setPendingPlan(null);
+    setPendingCheckoutCallback(null);
+  };
+
+  const handleModalClose = () => {
+    setShowAuthModal(false);
+    setPendingPlan(null);
+    setPendingCheckoutCallback(null);
+  };
 
   return (
     <>
@@ -734,6 +777,15 @@ export default function Pricing() {
             </div>
           </div>
         )}
+
+        {/* Auth Choice Modal */}
+        <AuthChoiceModal
+          isOpen={showAuthModal}
+          onClose={handleModalClose}
+          onSignIn={handleModalSignIn}
+          onContinueAsGuest={handleModalContinueAsGuest}
+          planName={pendingPlan || undefined}
+        />
 
         <section
           aria-labelledby="pricing-title"

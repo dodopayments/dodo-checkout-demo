@@ -49,16 +49,20 @@ function CheckoutPageContent() {
   );
   // State for error messages
   const [error, setError] = useState<string | null>(null);
-  // Ref to ensure SDK is only initialized once
-  const initializedRef = useRef(false);
+  // Ref to track if SDK has been initialized for the current checkout URL
+  const initializedRef = useRef<string | null>(null);
+  // Ref to track the loading timeout
+  const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // Ref to store current session for use in SDK event callbacks
+  const sessionRef = useRef(session);
 
-  // Get checkout URL from query params or localStorage
-  // This allows the checkout to work both on direct navigation and after redirect
-  const checkoutUrl =
-    searchParams.get("checkout_url") ||
-    (typeof window !== "undefined"
-      ? localStorage.getItem("pending_checkout_url")
-      : null);
+  // Get checkout URL from query params only
+  const checkoutUrl = searchParams.get("checkout_url");
+
+  // Update session ref when session changes
+  useEffect(() => {
+    sessionRef.current = session;
+  }, [session]);
 
   /**
    * Handle return from redirect checkout (e.g., after 3DS authentication or bank redirect)
@@ -99,7 +103,8 @@ function CheckoutPageContent() {
 
   /**
    * Initialize Dodo Payments SDK and open inline checkout
-   * This effect runs once when the component mounts and checkoutUrl is available
+   * This effect runs when the component mounts and checkoutUrl is available
+   * Re-initializes on refresh by checking if checkoutUrl has changed
    */
   useEffect(() => {
     // Redirect to pricing if no checkout URL is available
@@ -108,106 +113,139 @@ function CheckoutPageContent() {
       return;
     }
 
-    // Prevent multiple initializations
-    if (initializedRef.current) return;
-    initializedRef.current = true;
+    // Skip if already initialized for this checkout URL
+    if (initializedRef.current === checkoutUrl) {
+      return;
+    }
+
+    // Mark as initialized for this checkout URL
+    initializedRef.current = checkoutUrl;
+
+    // Clear any existing timeout
+    if (loadingTimeoutRef.current) {
+      clearTimeout(loadingTimeoutRef.current);
+    }
 
     // Set timeout to log warning if checkout doesn't open within 10 seconds
-    const loadingTimeout = setTimeout(() => {
+    loadingTimeoutRef.current = setTimeout(() => {
       if (process.env.NODE_ENV === "development") {
         console.warn("Checkout did not open within timeout period");
       }
     }, 10000);
 
     // Initialize Dodo Payments SDK with inline display type
-    DodoPayments.Initialize({
-      mode: "test", // Change to "live" for production
-      displayType: "inline", // Display checkout inline in the page
-      onEvent: (event) => {
-        if (process.env.NODE_ENV === "development") {
-          console.log("Checkout event:", event.event_type, event.data);
-        }
-        switch (event.event_type) {
-          case "checkout.opened":
-            // Checkout successfully opened
-            clearTimeout(loadingTimeout);
-            if (process.env.NODE_ENV === "development") {
-              console.log("Checkout opened successfully");
-            }
-            break;
-
-          case "checkout.breakdown": {
-            // Update order breakdown when pricing details change
-            const message = event.data?.message as CheckoutBreakdownData;
-            if (message) {
-              setBreakdown(message);
-            }
-            break;
+    // Note: SDK may need to be re-initialized on page refresh
+    try {
+      DodoPayments.Initialize({
+        mode: "test", // Change to "live" for production
+        displayType: "inline", // Display checkout inline in the page
+        onEvent: (event) => {
+          if (process.env.NODE_ENV === "development") {
+            console.log("Checkout event:", event.event_type, event.data);
           }
-
-          case "checkout.customer_details_submitted":
-            // Customer has submitted their details (no action needed)
-            break;
-
-          case "checkout.redirect": {
-            // Handle redirect scenarios (e.g., 3DS authentication, bank pages)
-            if (event.data?.type === "success") {
-              // Payment was successful after redirect
-              const sessionId =
-                typeof window !== "undefined"
-                  ? localStorage.getItem("pending_checkout_session_id")
-                  : null;
-              // Verify payment with backend if session ID and user email are available
-              if (sessionId && session?.user?.email) {
-                verifyPayment(session.user.email, sessionId)
-                  .then((data) => {
-                    if (data?.success) {
-                      router.push("/dashboard");
-                    } else {
-                      setError(data?.message || "Payment verification failed");
-                    }
-                  })
-                  .catch((err) => {
-                    const errorMessage =
-                      err instanceof Error
-                        ? err.message
-                        : "Error verifying payment";
-                    setError(errorMessage);
-                    if (process.env.NODE_ENV === "development") {
-                      console.error("Error verifying payment:", err);
-                    }
-                  });
-              } else {
-                // Show error if unable to verify payment
-                setError("Unable to verify payment. Please contact support.");
+          switch (event.event_type) {
+            case "checkout.opened":
+              // Checkout successfully opened
+              if (loadingTimeoutRef.current) {
+                clearTimeout(loadingTimeoutRef.current);
+                loadingTimeoutRef.current = null;
               }
-            } else if (event.data?.type === "failure") {
-              // Payment failed after redirect
-              setError("Payment failed. Please try again.");
-            }
-            break;
-          }
+              if (process.env.NODE_ENV === "development") {
+                console.log("Checkout opened successfully");
+              }
+              break;
 
-          case "checkout.error": {
-            // Handle checkout errors
-            clearTimeout(loadingTimeout);
-            if (process.env.NODE_ENV === "development") {
-              console.error("Checkout error:", event.data?.message);
+            case "checkout.breakdown": {
+              // Update order breakdown when pricing details change
+              const message = event.data?.message as CheckoutBreakdownData;
+              if (message) {
+                setBreakdown(message);
+              }
+              break;
             }
-            const errorMessage =
-              typeof event.data?.message === "string"
-                ? event.data.message
-                : "An error occurred during checkout";
-            setError(errorMessage);
-            break;
-          }
 
-          case "checkout.closed":
-            // Checkout was closed by user (no action needed)
-            break;
-        }
-      },
-    });
+            case "checkout.customer_details_submitted":
+              // Customer has submitted their details (no action needed)
+              break;
+
+            case "checkout.redirect": {
+              // Handle redirect scenarios (e.g., 3DS authentication, bank pages)
+              if (event.data?.type === "success") {
+                // Payment was successful after redirect
+                const sessionId =
+                  typeof window !== "undefined"
+                    ? localStorage.getItem("pending_checkout_session_id")
+                    : null;
+                // Verify payment with backend if session ID and user email are available
+                const currentSession = sessionRef.current;
+                if (sessionId && currentSession?.user?.email) {
+                  verifyPayment(currentSession.user.email, sessionId)
+                    .then((data) => {
+                      if (data?.success) {
+                        router.push("/dashboard");
+                      } else {
+                        setError(
+                          data?.message || "Payment verification failed"
+                        );
+                      }
+                    })
+                    .catch((err) => {
+                      const errorMessage =
+                        err instanceof Error
+                          ? err.message
+                          : "Error verifying payment";
+                      setError(errorMessage);
+                      if (process.env.NODE_ENV === "development") {
+                        console.error("Error verifying payment:", err);
+                      }
+                    });
+                } else {
+                  // Show error if unable to verify payment
+                  setError("Unable to verify payment. Please contact support.");
+                }
+              } else if (event.data?.type === "failure") {
+                // Payment failed after redirect
+                setError("Payment failed. Please try again.");
+              }
+              break;
+            }
+
+            case "checkout.error": {
+              // Handle checkout errors
+              if (loadingTimeoutRef.current) {
+                clearTimeout(loadingTimeoutRef.current);
+                loadingTimeoutRef.current = null;
+              }
+              if (process.env.NODE_ENV === "development") {
+                console.error("Checkout error:", event.data?.message);
+              }
+              const errorMessage =
+                typeof event.data?.message === "string"
+                  ? event.data.message
+                  : "An error occurred during checkout";
+              setError(errorMessage);
+              break;
+            }
+
+            case "checkout.closed":
+              // Checkout was closed by user (no action needed)
+              break;
+          }
+        },
+      });
+    } catch (initError) {
+      // If initialization fails, reset the ref so it can be retried
+      initializedRef.current = null;
+      if (process.env.NODE_ENV === "development") {
+        console.error("SDK initialization error:", initError);
+      }
+      setError("Failed to initialize payment SDK. Please refresh the page.");
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+        loadingTimeoutRef.current = null;
+      }
+      return;
+    }
 
     /**
      * Function to open checkout in the inline element
@@ -232,7 +270,10 @@ function CheckoutPageContent() {
               console.error("Error opening checkout:", error);
             }
             setError("Failed to initialize checkout. Please try again.");
-            clearTimeout(loadingTimeout);
+            if (loadingTimeoutRef.current) {
+              clearTimeout(loadingTimeoutRef.current);
+              loadingTimeoutRef.current = null;
+            }
           }
         } else {
           // Retry after 100ms if element is not found
@@ -241,7 +282,10 @@ function CheckoutPageContent() {
             setTimeout(openCheckout, 100);
           } else {
             // Max retries reached, stop retrying and show error
-            clearTimeout(loadingTimeout);
+            if (loadingTimeoutRef.current) {
+              clearTimeout(loadingTimeoutRef.current);
+              loadingTimeoutRef.current = null;
+            }
             setError("Failed to load checkout. Please refresh the page.");
             if (process.env.NODE_ENV === "development") {
               console.error(
@@ -258,17 +302,22 @@ function CheckoutPageContent() {
 
     // Cleanup function
     return () => {
-      clearTimeout(loadingTimeout);
-      if (typeof window !== "undefined") {
-        localStorage.removeItem("pending_checkout_url");
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+        loadingTimeoutRef.current = null;
       }
+      // Only close checkout if we're actually navigating away (not just re-rendering)
       try {
-        DodoPayments.Checkout.close();
+        // Only close if checkoutUrl changed (meaning we're switching to a different checkout)
+        // On refresh, checkoutUrl stays the same, so we don't close
+        if (initializedRef.current !== checkoutUrl) {
+          DodoPayments.Checkout.close();
+        }
       } catch {
         // Ignore cleanup errors
       }
     };
-  }, [checkoutUrl, router, session]);
+  }, [checkoutUrl, router]);
 
   /**
    * Format currency amount from cents to readable format

@@ -306,13 +306,9 @@ function CheckoutPageContent() {
         clearTimeout(loadingTimeoutRef.current);
         loadingTimeoutRef.current = null;
       }
-      // Only close checkout if we're actually navigating away (not just re-rendering)
       try {
-        // Only close if checkoutUrl changed (meaning we're switching to a different checkout)
-        // On refresh, checkoutUrl stays the same, so we don't close
-        if (initializedRef.current !== checkoutUrl) {
-          DodoPayments.Checkout.close();
-        }
+        // Always close on cleanup - the SDK will handle the case where it's already closed
+        DodoPayments.Checkout.close();
       } catch {
         // Ignore cleanup errors
       }

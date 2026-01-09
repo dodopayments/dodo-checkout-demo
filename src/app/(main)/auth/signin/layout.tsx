@@ -1,7 +1,7 @@
-import { auth } from '../../../../auth'
 import { redirect } from 'next/navigation';
 import type { Metadata } from "next"
 import { siteConfig } from "@/app/siteConfig"
+import { auth } from '../../../../../auth';
 
 export const metadata: Metadata = {
   title: `${siteConfig.name} | Sign In`,

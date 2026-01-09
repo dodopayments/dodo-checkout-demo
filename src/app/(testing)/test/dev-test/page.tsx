@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { DodoPayments, CheckoutBreakdownData } from 'dodopayments-checkout-dev';
 
 interface CheckoutSessionParams {
@@ -15,7 +15,10 @@ const MODE: 'test' | 'live' = 'test';
 
 export default function CheckoutPage() {
     const [breakdown, setBreakdown] = useState<Partial<CheckoutBreakdownData>>({});
+    const [checkoutStatus, setCheckoutStatus] = useState<string | null>(null);
+    const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
     const [sessionId, setSessionId] = useState<string | null>(null);
+    const redirectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     async function getCheckoutSession({ mode, product_cart }: CheckoutSessionParams) {
         const res = await fetch(`/api/create-checkout-session/dev`, {
@@ -49,6 +52,16 @@ export default function CheckoutPage() {
         main();
     }, []);
 
+    function handleImmediateRedirect() {
+        if (redirectTimeoutRef.current) {
+            clearTimeout(redirectTimeoutRef.current);
+            redirectTimeoutRef.current = null;
+        }
+        if (redirectUrl) {
+            window.location.href = redirectUrl;
+        }
+    }
+
     useEffect(() => {
         if (!sessionId) return;
 
@@ -56,20 +69,40 @@ export default function CheckoutPage() {
             mode: MODE,
             displayType: 'inline',
             onEvent: (event) => {
-                // 2. Listen for the 'checkout.breakdown' event
+                console.log("event", event);
+                if (event.event_type === "checkout.redirect_requested") {
+                    const message = event.data?.message as { redirect_to: string };
+                    if (message) {
+                        setRedirectUrl(message.redirect_to);
+                        redirectTimeoutRef.current = setTimeout(() => {
+                            window.location.href = message.redirect_to;
+                        }, 10000);
+                    }
+                }
+                if (event.event_type === "checkout.status") {
+                    const message = event.data?.message as { status: string };
+                    if (message) setCheckoutStatus(message.status);
+                }
                 if (event.event_type === "checkout.breakdown") {
                     const message = event.data?.message as CheckoutBreakdownData;
                     if (message) setBreakdown(message);
                 }
             }
         });
-        console.log("sessionId", sessionId, MODE);
         DodoPayments.Checkout.open({
             checkoutUrl: `https://${MODE}.checkout.dodopayments.tech/session/${sessionId}`,
-            elementId: 'dodo-inline-checkout'
+            elementId: 'dodo-inline-checkout',
+            options: {
+                manualRedirect: true,
+            }
         });
 
-        return () => DodoPayments.Checkout.close();
+        return () => {
+            if (redirectTimeoutRef.current) {
+                clearTimeout(redirectTimeoutRef.current);
+            }
+            DodoPayments.Checkout.close();
+        };
     }, [sessionId]);
 
     const format = (amt: number | null | undefined, curr: string | null | undefined) =>
@@ -115,6 +148,22 @@ export default function CheckoutPage() {
                     )}
                 </div>
             </div>
+            <div className="w-full md:w-1/2 p-8 bg-gray-50">
+                <h2 className="text-2xl font-bold mb-4">Latest Checkout Status</h2>
+                <p>{checkoutStatus}</p>
+            </div>
+            {redirectUrl && (
+                <div className="w-full md:w-1/2 p-8 bg-gray-50">
+                    <h2 className="text-2xl font-bold mb-4">Redirect Request</h2>
+                    <p className="mb-4">{redirectUrl}</p>
+                    <button
+                        onClick={handleImmediateRedirect}
+                        className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                    >
+                        Redirect Now
+                    </button>
+                </div>
+            )}
         </div>
     );
 }

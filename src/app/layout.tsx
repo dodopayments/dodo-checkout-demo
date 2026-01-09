@@ -51,7 +51,7 @@ export const metadata: Metadata = {
     alternates: {
         canonical: siteConfig.url,
     },
-}
+} 
 
 export default function RootLayout({
     children,

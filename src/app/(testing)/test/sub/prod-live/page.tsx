@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState, useRef } from 'react';
-import { DodoPayments, CheckoutBreakdownData } from 'dodopayments-checkout-dev';
+import { DodoPayments, CheckoutBreakdownData } from 'dodopayments-checkout';
+import { PRODUCT_IDS } from '@/lib/product-ids';
 
 interface CheckoutSessionParams {
     mode: 'test' | 'live';
@@ -11,7 +12,9 @@ interface CheckoutSessionParams {
     }[];
 }
 
-const MODE: 'test' | 'live' = 'test';
+const MODE: 'test' | 'live' = 'live';
+const ENV: 'dev' | 'prod' = 'prod';
+const CATEGORY: 'one' | 'sub' = 'sub';
 
 export default function CheckoutPage() {
     const [breakdown, setBreakdown] = useState<Partial<CheckoutBreakdownData>>({});
@@ -20,8 +23,10 @@ export default function CheckoutPage() {
     const [sessionId, setSessionId] = useState<string | null>(null);
     const redirectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+    const productId = PRODUCT_IDS[CATEGORY][ENV][MODE];
+
     async function getCheckoutSession({ mode, product_cart }: CheckoutSessionParams) {
-        const res = await fetch(`/api/create-checkout-session/dev`, {
+        const res = await fetch(`/api/create-checkout-session/${ENV}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -34,16 +39,16 @@ export default function CheckoutPage() {
 
     async function main() {
         if (MODE === 'test') {
+            const sessionId = await getCheckoutSession({ mode: 'test', product_cart: [] });
+            setSessionId(sessionId);
+        } else {
             const sessionId = await getCheckoutSession({
-                mode: 'test',
+                mode: 'live',
                 product_cart: [{
-                    product_id: "pdt_0NVubMm4ZegPVgiYrSsKS",
+                    product_id: productId,
                     quantity: 1,
                 }]
             });
-            setSessionId(sessionId);
-        } else {
-            const sessionId = await getCheckoutSession({ mode: 'live', product_cart: [] });
             setSessionId(sessionId);
         }
     }
@@ -90,7 +95,7 @@ export default function CheckoutPage() {
             }
         });
         DodoPayments.Checkout.open({
-            checkoutUrl: `https://${MODE}.checkout.dodopayments.tech/session/${sessionId}`,
+            checkoutUrl: `https://checkout.dodopayments.com/session/${sessionId}`,
             elementId: 'dodo-inline-checkout',
             options: {
                 manualRedirect: true,

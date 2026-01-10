@@ -84,9 +84,7 @@ export default function CheckoutPage() {
                     const message = event.data?.message as { redirect_to: string };
                     if (message) {
                         setRedirectUrl(message.redirect_to);
-                        redirectTimeoutRef.current = setTimeout(() => {
-                            window.location.href = message.redirect_to;
-                        }, 10000);
+                        window.location.href = message.redirect_to;
                     }
                 }
                 if (event.event_type === "checkout.status") {

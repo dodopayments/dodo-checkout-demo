@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { DodoPayments, CheckoutBreakdownData } from 'dodopayments-checkout';
 import { PRODUCT_IDS } from '@/lib/product-ids';
 
@@ -23,7 +23,6 @@ export default function CheckoutPage() {
     const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
     const [sessionId, setSessionId] = useState<string | null>(null);
     const redirectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-    const iframeRef = useRef<HTMLIFrameElement | null>(null);
 
     const productId = PRODUCT_IDS[CATEGORY][ENV][MODE];
 
@@ -43,25 +42,24 @@ export default function CheckoutPage() {
         return data.session_id;
     }
 
-    async function main() {
-        if (MODE === 'test') {
-            const sessionId = await getCheckoutSession({
-                mode: 'test',
-                product_cart: [{
-                    product_id: productId,
-                    quantity: 1,
-                }]
-            });
-            setSessionId(sessionId);
-        } else {
-            const sessionId = await getCheckoutSession({ mode: 'live', product_cart: [] });
-            setSessionId(sessionId);
-        }
-    }
-
     useEffect(() => {
+        async function main() {
+            if (MODE === 'test') {
+                const sessionId = await getCheckoutSession({
+                    mode: 'test',
+                    product_cart: [{
+                        product_id: productId,
+                        quantity: 1,
+                    }]
+                });
+                setSessionId(sessionId);
+            } else {
+                const sessionId = await getCheckoutSession({ mode: 'live', product_cart: [] });
+                setSessionId(sessionId);
+            }
+        }
         main();
-    }, []);
+    }, [productId]);
 
     function handleImmediateRedirect() {
         if (redirectTimeoutRef.current) {
@@ -106,58 +104,71 @@ export default function CheckoutPage() {
             }
         });
 
+        let iframeWindow: Window | null = null;
+
+        // Opener: Get iframe reference once
+        function opener() {
+            console.log('[Opener] Getting iframe reference...');
+            const checkoutElement = document.getElementById('dodo-inline-checkout');
+            const iframe = checkoutElement?.querySelector('iframe') as HTMLIFrameElement | null;
+            iframeWindow = iframe?.contentWindow || null;
+            console.log('[Opener] Iframe found:', !!iframe, 'Window available:', !!iframeWindow);
+        }
+
+        // Receiver: Listen for messages and forward to iframe
+        function receiver(event: MessageEvent) {
+            console.log('[Receiver] Message received:', event.data, 'Source:', event.source);
+            
+            if (!iframeWindow) {
+                console.log('[Receiver] No iframe window, skipping');
+                return;
+            }
+            
+            // Skip messages from iframe itself
+            if (event.source === iframeWindow) {
+                console.log('[Receiver] Message from iframe itself, skipping');
+                return;
+            }
+            
+            // Forward message to iframe
+            console.log('[Receiver] Forwarding message to iframe');
+            sender(event.data);
+        }
+
+        // Sender: Send message to iframe
+        function sender(data: unknown) {
+            console.log('[Sender] Sending message to iframe:', data);
+            
+            if (!iframeWindow) {
+                console.log('[Sender] No iframe window, cannot send');
+                return;
+            }
+            
+            try {
+                iframeWindow.postMessage(data, '*');
+                console.log('[Sender] Message sent successfully');
+            } catch (error) {
+                console.error('[Sender] Error sending message to iframe:', error);
+            }
+        }
+
+        // Set up after iframe is created
+        const timeout = setTimeout(() => {
+            console.log('[Setup] Initializing opener and receiver...');
+            opener();
+            window.addEventListener('message', receiver);
+            console.log('[Setup] Message listener added');
+        }, 500);
+
         return () => {
             if (redirectTimeoutRef.current) {
                 clearTimeout(redirectTimeoutRef.current);
             }
+            clearTimeout(timeout);
+            window.removeEventListener('message', receiver);
             DodoPayments.Checkout.close();
         };
     }, [sessionId]);
-
-    // Function to forward messages from iframe back to iframe
-    const forwardMessageToIframe = useCallback((event: MessageEvent) => {
-        if (!iframeRef.current) return;
-        
-        // Forward the message back to the iframe
-        iframeRef.current.contentWindow?.postMessage(event.data, '*');
-    }, []);
-
-    // Set up postMessage listener to forward messages from iframe
-    useEffect(() => {
-        if (!sessionId) return;
-
-        // Find the iframe element after it's created
-        const findIframe = () => {
-            const container = document.getElementById('dodo-inline-checkout');
-            if (container) {
-                const iframe = container.querySelector('iframe') as HTMLIFrameElement;
-                if (iframe) {
-                    iframeRef.current = iframe;
-                    return true;
-                }
-            }
-            return false;
-        };
-
-        // Try to find iframe immediately, or wait a bit for it to be created
-        let attempts = 0;
-        const maxAttempts = 10;
-        const checkInterval = setInterval(() => {
-            if (findIframe() || attempts >= maxAttempts) {
-                clearInterval(checkInterval);
-                if (iframeRef.current) {
-                    // Set up postMessage listener
-                    window.addEventListener('message', forwardMessageToIframe);
-                }
-            }
-            attempts++;
-        }, 100);
-
-        return () => {
-            clearInterval(checkInterval);
-            window.removeEventListener('message', forwardMessageToIframe);
-        };
-    }, [sessionId, forwardMessageToIframe]);
 
     const format = (amt: number | null | undefined, curr: string | null | undefined) =>
         amt != null && curr ? `${curr} ${(amt / 100).toFixed(2)}` : '0.00';

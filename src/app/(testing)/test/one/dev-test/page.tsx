@@ -10,6 +10,7 @@ interface CheckoutSessionParams {
         product_id: string;
         quantity: number;
     }[];
+    redirect_url?: string;
 }
 
 const MODE: 'test' | 'live' = 'test';
@@ -31,31 +32,34 @@ export default function CheckoutPage() {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ mode, product_cart }),
+            body: JSON.stringify({ 
+                mode, 
+                product_cart,
+                redirect_url: window.location.origin + '/status'
+            }),
         });
         const data = await res.json();
         return data.session_id;
     }
 
-    async function main() {
-        if (MODE === 'test') {
-            const sessionId = await getCheckoutSession({
-                mode: 'test',
-                product_cart: [{
-                    product_id: productId,
-                    quantity: 1,
-                }]
-            });
-            setSessionId(sessionId);
-        } else {
-            const sessionId = await getCheckoutSession({ mode: 'live', product_cart: [] });
-            setSessionId(sessionId);
-        }
-    }
-
     useEffect(() => {
+        async function main() {
+            if (MODE === 'test') {
+                const sessionId = await getCheckoutSession({
+                    mode: 'test',
+                    product_cart: [{
+                        product_id: productId,
+                        quantity: 1,
+                    }]
+                });
+                setSessionId(sessionId);
+            } else {
+                const sessionId = await getCheckoutSession({ mode: 'live', product_cart: [] });
+                setSessionId(sessionId);
+            }
+        }
         main();
-    }, []);
+    }, [productId]);
 
     function handleImmediateRedirect() {
         if (redirectTimeoutRef.current) {

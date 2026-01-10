@@ -10,6 +10,7 @@ interface CheckoutSessionParams {
     product_id: string;
     quantity: number;
   }[];
+  redirect_url?: string;
 }
 
 const MODE: "test" | "live" = "live";
@@ -36,7 +37,11 @@ export default function CheckoutPage() {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ mode, product_cart }),
+      body: JSON.stringify({ 
+        mode, 
+        product_cart,
+        redirect_url: window.location.origin + '/status'
+      }),
     });
     const data = await res.json();
     return data.session_id;

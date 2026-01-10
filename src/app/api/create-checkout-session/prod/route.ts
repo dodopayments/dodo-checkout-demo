@@ -24,6 +24,10 @@ export async function POST(request: NextRequest) {
         const payload: Record<string, unknown> = {
             product_cart: body.product_cart,
             return_url: body.return_url || `${appUrl}/pricing`,
+            redirect_url: body.redirect_url,
+            feature_flags: {
+                redirect_immediately: true,
+            },
         }
 
         const response = await fetch(`https://${mode}.dodopayments.com/checkouts`, {

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { DodoPayments, CheckoutBreakdownData } from "dodopayments-checkout-dev";
+import { PRODUCT_IDS } from '@/lib/product-ids';
 
 interface CheckoutSessionParams {
   mode: "test" | "live";
@@ -12,6 +13,8 @@ interface CheckoutSessionParams {
 }
 
 const MODE: "test" | "live" = "live";
+const ENV: 'dev' | 'prod' = 'dev';
+const CATEGORY: 'one' | 'sub' = 'sub';
 
 export default function CheckoutPage() {
   const [breakdown, setBreakdown] = useState<Partial<CheckoutBreakdownData>>(
@@ -22,11 +25,13 @@ export default function CheckoutPage() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const redirectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  const productId = PRODUCT_IDS[CATEGORY][ENV][MODE];
+
   async function getCheckoutSession({
     mode,
     product_cart,
   }: CheckoutSessionParams) {
-    const res = await fetch(`/api/create-checkout-session/dev`, {
+    const res = await fetch(`/api/create-checkout-session/${ENV}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -50,7 +55,7 @@ export default function CheckoutPage() {
           mode: "live",
           product_cart: [
             {
-              product_id: "pdt_0NVubiNAXFupsFxycXrUQ",
+              product_id: productId,
               quantity: 1,
             },
           ],
@@ -79,7 +84,6 @@ export default function CheckoutPage() {
       displayType: "inline",
       onEvent: (event) => {
         console.log("event", event);
-        // 2. Listen for the 'checkout.breakdown' event
         if (event.event_type === "checkout.redirect_requested") {
           const message = event.data?.message as { redirect_to: string };
           if (message) {

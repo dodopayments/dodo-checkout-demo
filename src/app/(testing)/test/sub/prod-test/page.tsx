@@ -124,13 +124,7 @@ export default function CheckoutPage() {
                 return;
             }
             
-            // Skip messages from iframe itself
-            if (event.source === iframeWindow) {
-                console.log('[Receiver] Message from iframe itself, skipping');
-                return;
-            }
-            
-            // Forward message to iframe
+            // Forward message to iframe (even if from iframe itself)
             console.log('[Receiver] Forwarding message to iframe');
             sender(event.data);
         }

@@ -60,9 +60,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        <script async src="https://sdk.custom.hs.dodopayments.com"></script>
-      </head>
       <body
         className={`${inter.className} min-h-screen scroll-auto antialiased selection:bg-lime-100 selection:text-lime-700 dark:bg-gray-950`}
         suppressHydrationWarning

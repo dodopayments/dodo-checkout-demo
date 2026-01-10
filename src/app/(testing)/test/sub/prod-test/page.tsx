@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { DodoPayments, CheckoutBreakdownData } from 'dodopayments-checkout';
 import { PRODUCT_IDS } from '@/lib/product-ids';
 
@@ -23,6 +23,7 @@ export default function CheckoutPage() {
     const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
     const [sessionId, setSessionId] = useState<string | null>(null);
     const redirectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const iframeRef = useRef<HTMLIFrameElement | null>(null);
 
     const productId = PRODUCT_IDS[CATEGORY][ENV][MODE];
 
@@ -112,6 +113,51 @@ export default function CheckoutPage() {
             DodoPayments.Checkout.close();
         };
     }, [sessionId]);
+
+    // Function to forward messages from iframe back to iframe
+    const forwardMessageToIframe = useCallback((event: MessageEvent) => {
+        if (!iframeRef.current) return;
+        
+        // Forward the message back to the iframe
+        iframeRef.current.contentWindow?.postMessage(event.data, '*');
+    }, []);
+
+    // Set up postMessage listener to forward messages from iframe
+    useEffect(() => {
+        if (!sessionId) return;
+
+        // Find the iframe element after it's created
+        const findIframe = () => {
+            const container = document.getElementById('dodo-inline-checkout');
+            if (container) {
+                const iframe = container.querySelector('iframe') as HTMLIFrameElement;
+                if (iframe) {
+                    iframeRef.current = iframe;
+                    return true;
+                }
+            }
+            return false;
+        };
+
+        // Try to find iframe immediately, or wait a bit for it to be created
+        let attempts = 0;
+        const maxAttempts = 10;
+        const checkInterval = setInterval(() => {
+            if (findIframe() || attempts >= maxAttempts) {
+                clearInterval(checkInterval);
+                if (iframeRef.current) {
+                    // Set up postMessage listener
+                    window.addEventListener('message', forwardMessageToIframe);
+                }
+            }
+            attempts++;
+        }, 100);
+
+        return () => {
+            clearInterval(checkInterval);
+            window.removeEventListener('message', forwardMessageToIframe);
+        };
+    }, [sessionId, forwardMessageToIframe]);
 
     const format = (amt: number | null | undefined, curr: string | null | undefined) =>
         amt != null && curr ? `${curr} ${(amt / 100).toFixed(2)}` : '0.00';

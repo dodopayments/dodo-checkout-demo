@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from 'react';
-import { DodoPayments, CheckoutBreakdownData } from 'dodopayments-checkout';
+import { DodoPayments, CheckoutBreakdownData } from 'dodopayments-checkout-apple';
 import { PRODUCT_IDS } from '@/lib/product-ids';
 
 interface CheckoutSessionParams {

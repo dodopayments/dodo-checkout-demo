@@ -21,7 +21,7 @@ import Link from "next/link";
 import React, { Fragment } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { DodoPayments } from "dodopayments-checkout-apple";
+import { DodoPayments } from "dodopayments-checkout";
 // Removed custom BillingAddressModal; unified Checkout Sessions will collect needed details
 
 type FixedPrice = string;

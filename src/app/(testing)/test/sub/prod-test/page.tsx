@@ -108,62 +108,10 @@ function CheckoutPageContent() {
             }
         });
 
-        let iframeWindow: Window | null = null;
-
-        // Opener: Get iframe reference once
-        function opener() {
-            console.log('[Opener] Getting iframe reference...');
-            const checkoutElement = document.getElementById('dodo-inline-checkout');
-            const iframe = checkoutElement?.querySelector('iframe') as HTMLIFrameElement | null;
-            iframeWindow = iframe?.contentWindow || null;
-            console.log('[Opener] Iframe found:', !!iframe, 'Window available:', !!iframeWindow);
-        }
-
-        // Receiver: Listen for messages and forward to iframe
-        function receiver(event: MessageEvent) {
-            console.log('[Receiver] Message received:', event.data, 'Source:', event.source);
-            
-            if (!iframeWindow) {
-                console.log('[Receiver] No iframe window, skipping');
-                return;
-            }
-            
-            // Forward message to iframe (even if from iframe itself)
-            console.log('[Receiver] Forwarding message to iframe');
-            sender(event.data);
-        }
-
-        // Sender: Send message to iframe
-        function sender(data: unknown) {
-            console.log('[Sender] Sending message to iframe:', data);
-            
-            if (!iframeWindow) {
-                console.log('[Sender] No iframe window, cannot send');
-                return;
-            }
-            
-            try {
-                iframeWindow.postMessage(data, '*');
-                console.log('[Sender] Message sent successfully');
-            } catch (error) {
-                console.error('[Sender] Error sending message to iframe:', error);
-            }
-        }
-
-        // Set up after iframe is created
-        const timeout = setTimeout(() => {
-            console.log('[Setup] Initializing opener and receiver...');
-            opener();
-            window.addEventListener('message', receiver);
-            console.log('[Setup] Message listener added');
-        }, 500);
-
         return () => {
             if (redirectTimeoutRef.current) {
                 clearTimeout(redirectTimeoutRef.current);
             }
-            clearTimeout(timeout);
-            window.removeEventListener('message', receiver);
             DodoPayments.Checkout.close();
         };
     }, [sessionId]);

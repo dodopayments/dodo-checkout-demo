@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { DodoPayments, CheckoutBreakdownData } from 'dodopayments-checkout';
 import { PRODUCT_IDS } from '@/lib/product-ids';
 
@@ -18,6 +19,7 @@ const ENV: 'dev' | 'prod' = 'prod';
 const CATEGORY: 'one' | 'sub' = 'sub';
 
 export default function CheckoutPage() {
+    const searchParams = useSearchParams();
     const [breakdown, setBreakdown] = useState<Partial<CheckoutBreakdownData>>({});
     const [checkoutStatus, setCheckoutStatus] = useState<string | null>(null);
     const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
@@ -25,9 +27,11 @@ export default function CheckoutPage() {
     const redirectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     const productId = PRODUCT_IDS[CATEGORY][ENV][MODE];
+    const theme = searchParams.get('theme') || 'light';
 
     async function getCheckoutSession({ mode, product_cart }: CheckoutSessionParams) {
-        const res = await fetch(`/api/create-checkout-session/${ENV}`, {
+        const themeParam = theme === 'dark' ? 'dark' : 'light';
+        const res = await fetch(`/api/create-checkout-session/${ENV}?theme=${themeParam}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

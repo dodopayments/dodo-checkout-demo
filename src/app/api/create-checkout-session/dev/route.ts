@@ -6,6 +6,10 @@ export async function POST(request: NextRequest) {
 
     const mode: "test" | "live" = body.mode;
 
+    // Get theme from query parameter, default to "light" if not provided or invalid
+    const themeParam = request.nextUrl.searchParams.get("theme");
+    const theme = themeParam === "dark" ? "dark" : "light";
+
     let bearerToken;
     if (mode === "test") {
       bearerToken = process.env.DODO_PAYMENTS_DEV_TEST_API_KEY;
@@ -26,7 +30,7 @@ export async function POST(request: NextRequest) {
       product_cart: body.product_cart,
       return_url: body.return_url || `${appUrl}/pricing`,
       redirect_url: body.redirect_url,
-      customization: { theme: "dark" },
+      customization: { theme },
       feature_flags: {
         redirect_immediately: true,
       },

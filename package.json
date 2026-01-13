@@ -26,7 +26,7 @@
     "clsx": "^2.1.1",
     "cobe": "^0.6.5",
     "dodopayments-checkout": "^1.6.3",
-    "dodopayments-checkout-apple": "file:dodopayments-checkout-apple-1.7.9.tgz",
+    "dodopayments-checkout-apple": "file:dodopayments-checkout-apple-1.7.4.tgz",
     "mongoose": "^8.0.0",
     "next": "15.1.11",
     "next-auth": "^5.0.0-beta.25",

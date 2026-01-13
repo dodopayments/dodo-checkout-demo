@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { DodoPayments, CheckoutBreakdownData } from 'dodopayments-checkout-apple';
 import { PRODUCT_IDS } from '@/lib/product-ids';
@@ -18,7 +18,7 @@ const MODE: 'test' | 'live' = 'test';
 const ENV: 'dev' | 'prod' = 'dev';
 const CATEGORY: 'one' | 'sub' = 'sub';
 
-export default function CheckoutPage() {
+function CheckoutPageContent() {
     const searchParams = useSearchParams();
     const [breakdown, setBreakdown] = useState<Partial<CheckoutBreakdownData>>({});
     const [checkoutStatus, setCheckoutStatus] = useState<string | null>(null);
@@ -177,5 +177,13 @@ export default function CheckoutPage() {
                 </div>
             )}
         </div>
+    );
+}
+
+export default function CheckoutPage() {
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Loading...</div>}>
+            <CheckoutPageContent />
+        </Suspense>
     );
 }

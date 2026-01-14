@@ -27,7 +27,7 @@
     display: block;
 }
 
-#dodo-inline-checkout>iframe {
+#dodo-inline-checkout iframe {
     width: 100% !important;
     min-height: 500px !important;
     height: 600px !important;

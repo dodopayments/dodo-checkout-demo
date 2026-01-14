@@ -20,7 +20,7 @@
         "@types/mdx": "^2.0.13",
         "clsx": "^2.1.1",
         "cobe": "^0.6.5",
-        "dodopayments-checkout": "1.7.0",
+        "dodopayments-checkout": "1.7.1",
         "dodopayments-checkout-apple": "file:dodopayments-checkout-apple-1.7.5.tgz",
         "mongoose": "^8.0.0",
         "next": "15.1.11",
@@ -513,7 +513,7 @@
 
     "doctrine": ["doctrine@3.0.0", "", { "dependencies": { "esutils": "^2.0.2" } }, ""],
 
-    "dodopayments-checkout": ["dodopayments-checkout@1.7.0", "", {}, "sha512-x7TSX1sIkB7b1rPkKyM1VM6Fcv1r8x/qKb+LAeP/qTT/hqtJlWC1ogqvg1vb4nHJXgAN8F/0wuzN8BPvTRtf3A=="],
+    "dodopayments-checkout": ["dodopayments-checkout@1.7.1", "", {}, "sha512-fK1awKElk+pJ50uiAR6X6cipUo3b9T9BAuyQ/S54+SU/hyMWhzdWC3SGaQ1rLlO/QAjtLBEdKMtf92evQHGW+Q=="],
 
     "dodopayments-checkout-apple": ["dodopayments-checkout-apple@dodopayments-checkout-apple-1.7.5.tgz", {}],
 

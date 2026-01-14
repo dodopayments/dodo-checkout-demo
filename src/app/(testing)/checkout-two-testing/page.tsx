@@ -138,7 +138,7 @@ function CheckoutTwoContent() {
         // Initialize SDK
         try {
             window.DodoPaymentsCheckout.DodoPayments.Initialize({
-                mode: "live",
+                mode: "test",
                 displayType: "inline",
                 onEvent: handleCheckoutEvent,
             });

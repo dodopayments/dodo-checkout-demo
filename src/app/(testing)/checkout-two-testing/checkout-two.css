@@ -19,20 +19,14 @@
 /* Dodo Payments Inline Checkout Styles */
 #dodo-inline-checkout {
     width: 100%;
-    min-height: 400px;
     background: #fff;
     border-radius: 8px;
     margin-top: 20px;
-    position: relative;
-    display: block;
 }
 
+/* Let SDK manage iframe heights dynamically - don't override! */
 #dodo-inline-checkout iframe {
-    width: 100% !important;
-    min-height: 500px !important;
-    height: 600px !important;
     border: none !important;
-    display: block !important;
 }
 
 /* Processing Overlay */

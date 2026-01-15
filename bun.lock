@@ -1,6 +1,5 @@
 {
   "lockfileVersion": 1,
-  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "dodo-checkout-demo",
@@ -21,7 +20,7 @@
         "@types/mdx": "^2.0.13",
         "clsx": "^2.1.1",
         "cobe": "^0.6.5",
-        "dodopayments-checkout": "file:dodopayments-checkout-1.7.2.tgz",
+        "dodopayments-checkout": "file:dodopayments-checkout-1.7.3.tgz",
         "dodopayments-checkout-apple": "file:dodopayments-checkout-apple-1.7.5.tgz",
         "mongoose": "^8.0.0",
         "next": "15.1.11",
@@ -514,7 +513,7 @@
 
     "doctrine": ["doctrine@3.0.0", "", { "dependencies": { "esutils": "^2.0.2" } }, ""],
 
-    "dodopayments-checkout": ["dodopayments-checkout@dodopayments-checkout-1.7.2.tgz", {}],
+    "dodopayments-checkout": ["dodopayments-checkout@dodopayments-checkout-1.7.3.tgz", {}],
 
     "dodopayments-checkout-apple": ["dodopayments-checkout-apple@dodopayments-checkout-apple-1.7.5.tgz", {}],
 

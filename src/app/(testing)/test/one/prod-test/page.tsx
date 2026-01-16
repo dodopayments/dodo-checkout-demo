@@ -87,7 +87,7 @@ function CheckoutPageContent() {
                     const message = event.data?.message as { redirect_to: string };
                     if (message) {
                         setRedirectUrl(message.redirect_to);
-                        window.location.href = message.redirect_to;
+                        // window.location.href = message.redirect_to;
                     }
                 }
                 if (event.event_type === "checkout.status") {

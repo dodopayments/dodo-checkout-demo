@@ -21,7 +21,7 @@
         "clsx": "^2.1.1",
         "cobe": "^0.6.5",
         "dodopayments-checkout": "^1.7.2",
-        "dodopayments-checkout-apple": "file:dodopayments-checkout-apple-1.7.9.tgz",
+        "dodopayments-checkout-apple": "file:dodopayments-checkout-apple-1.7.6.tgz",
         "mongoose": "^8.0.0",
         "next": "15.1.11",
         "next-auth": "^5.0.0-beta.25",
@@ -515,7 +515,7 @@
 
     "dodopayments-checkout": ["dodopayments-checkout@1.7.2", "", {}, "sha512-oPJSe85b3Qq4T/7pPgE7Lc+wplF1tsLoVdoPHF8Bpwz6O5ZwkzN2Vwf8EdbHdxYoQiKO9AH8yuT94xtePmg1ZQ=="],
 
-    "dodopayments-checkout-apple": ["dodopayments-checkout-apple@dodopayments-checkout-apple-1.7.9.tgz", {}],
+    "dodopayments-checkout-apple": ["dodopayments-checkout-apple@dodopayments-checkout-apple-1.7.6.tgz", {}],
 
     "dom-serializer": ["dom-serializer@2.0.0", "", { "dependencies": { "domelementtype": "^2.3.0", "domhandler": "^5.0.2", "entities": "^4.2.0" } }, ""],
 

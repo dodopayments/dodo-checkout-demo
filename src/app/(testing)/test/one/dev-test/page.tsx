@@ -16,6 +16,7 @@ interface CheckoutSessionParams {
 
 const MODE: 'test' | 'live' = 'test';
 const ENV: 'dev' | 'prod' = 'dev';
+
 const CATEGORY: 'one' | 'sub' = 'one';
 
 function CheckoutPageContent() {

@@ -21,7 +21,7 @@
         "clsx": "^2.1.1",
         "cobe": "^0.6.5",
         "dodopayments-checkout": "dodopayments-checkout-1.7.5.tgz",
-        "dodopayments-checkout-apple": "file:dodopayments-checkout-apple-1.7.7.tgz",
+        "dodopayments-checkout-apple": "file:dodopayments-checkout-apple-1.7.9.tgz",
         "mongoose": "^8.0.0",
         "next": "15.1.11",
         "next-auth": "^5.0.0-beta.25",
@@ -84,6 +84,10 @@
     "@humanwhocodes/module-importer": ["@humanwhocodes/module-importer@1.0.1", "", {}, ""],
 
     "@humanwhocodes/object-schema": ["@humanwhocodes/object-schema@2.0.3", "", {}, ""],
+
+    "@iframe-resizer/core": ["@iframe-resizer/core@5.5.7", "", { "dependencies": { "auto-console-group": "1.2.11" } }, "sha512-jxKF0uGS8RfJSkDoRJ697JbmuykGvEhl9nOLnBXdkaARcsFgTT1/Uvz3mxNHw3AqDgNCxCySuI5jYpYM7M4Xbw=="],
+
+    "@iframe-resizer/parent": ["@iframe-resizer/parent@5.5.7", "", { "dependencies": { "@iframe-resizer/core": "5.5.7", "auto-console-group": "1.2.11" } }, "sha512-1dDlHFl7TOgu7odDcz/AQkJRcm9Ztpw2F8af/IU5ZAJhVlQkj8pjdnc5RfniGqY3AHOnryFATtrk7TDgZqPQFg=="],
 
     "@img/sharp-darwin-arm64": ["@img/sharp-darwin-arm64@0.33.5", "", { "optionalDependencies": { "@img/sharp-libvips-darwin-arm64": "1.0.4" }, "os": "darwin", "cpu": "arm64" }, ""],
 
@@ -405,6 +409,8 @@
 
     "async-function": ["async-function@1.0.0", "", {}, ""],
 
+    "auto-console-group": ["auto-console-group@1.2.11", "", {}, "sha512-/RFCswabfQZR4CDYser0V+AC+6+Q1ro2+RrP0AinOXDYnWsm3w14uc2MVdEaaSCDfpiTtETfahE9N7z9Yb1JiA=="],
+
     "available-typed-arrays": ["available-typed-arrays@1.0.7", "", { "dependencies": { "possible-typed-array-names": "^1.0.0" } }, ""],
 
     "axe-core": ["axe-core@4.11.1", "", {}, ""],
@@ -515,7 +521,7 @@
 
     "dodopayments-checkout": ["dodopayments-checkout@dodopayments-checkout-1.7.5.tgz", {}],
 
-    "dodopayments-checkout-apple": ["dodopayments-checkout-apple@dodopayments-checkout-apple-1.7.7.tgz", {}],
+    "dodopayments-checkout-apple": ["dodopayments-checkout-apple@dodopayments-checkout-apple-1.7.9.tgz", { "dependencies": { "@iframe-resizer/parent": "^5.5.7" } }],
 
     "dom-serializer": ["dom-serializer@2.0.0", "", { "dependencies": { "domelementtype": "^2.3.0", "domhandler": "^5.0.2", "entities": "^4.2.0" } }, ""],
 

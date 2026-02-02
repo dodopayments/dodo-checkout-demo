@@ -31,6 +31,9 @@ export async function POST(request: NextRequest) {
             feature_flags: {
                 redirect_immediately: true,
             },
+            customer: body.customer ?? null,
+            billing_address: body.billing_address ?? null,
+            confirm: body.confirm ?? true,
         }
 
         const response = await fetch(`https://${mode}.dodopayments.com/checkouts`, {

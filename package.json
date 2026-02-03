@@ -25,7 +25,7 @@
     "@types/mdx": "^2.0.13",
     "clsx": "^2.1.1",
     "cobe": "^0.6.5",
-    "dodopayments-checkout": "file:dodopayments-checkout-1.8.0.tgz",
+    "dodopayments-checkout": "file:dodopayments-checkout-1.8.1.tgz",
     "dodopayments-checkout-apple": "file:dodopayments-checkout-apple-1.7.9.tgz",
     "mongoose": "^8.0.0",
     "next": "15.1.11",

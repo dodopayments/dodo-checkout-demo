@@ -23,57 +23,64 @@ function CheckoutPageContent() {
     const [breakdown, setBreakdown] = useState<Partial<CheckoutBreakdownData>>({});
     const [checkoutStatus, setCheckoutStatus] = useState<string | null>(null);
     const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
-    const [sessionId, setSessionId] = useState<string | null>(null);
+    const [sessionUrl, setSessionUrl] = useState<string | null>(null);
     const [formReady, setFormReady] = useState(false);
     const redirectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     const productId = PRODUCT_IDS[CATEGORY][ENV][MODE];
     const theme = searchParams.get('theme') || 'light';
+    const forceLanguage = searchParams.get('force_language');
 
     async function getCheckoutSession({ mode, product_cart }: CheckoutSessionParams) {
         const themeParam = theme === 'dark' ? 'dark' : 'light';
-        const res = await fetch(`/api/create-checkout-session/${ENV}?theme=${themeParam}`, {
+        const apiUrl = new URL(`/api/create-checkout-session/${ENV}`, window.location.origin);
+        apiUrl.searchParams.set('theme', themeParam);
+
+        const bodyPayload: Record<string, unknown> = {
+            mode,
+            product_cart,
+            redirect_url: window.location.origin + '/status',
+            customer: {
+                email: 'customer@example.com',
+                name: 'John Doe',
+              },
+
+              // Billing address for tax calculation and compliance
+              billing_address: {
+                street: '123 Main St',
+                city: 'San Francisco',
+                state: 'CA',
+                country: 'US', // Required: ISO 3166-1 alpha-2 country code
+                zipcode: '94102'
+              },
+              confirm: true,
+              force_language: forceLanguage,
+        };
+
+        const res = await fetch(apiUrl.toString(), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ 
-                mode, 
-                product_cart,
-                redirect_url: window.location.origin + '/status',
-                customer: {
-                    email: 'customer@example.com',
-                    name: 'John Doe',
-                  },
-
-                  // Billing address for tax calculation and compliance
-                  billing_address: {
-                    street: '123 Main St',
-                    city: 'San Francisco',
-                    state: 'CA',
-                    country: 'US', // Required: ISO 3166-1 alpha-2 country code
-                    zipcode: '94102'
-                  },
-                  confirm: true,
-            }),
+            body: JSON.stringify(bodyPayload),
         });
         const data = await res.json();
-        return data.session_id;
+        return data.checkout_url;
     }
 
     async function main() {
         if (MODE === 'test') {
-            const sessionId = await getCheckoutSession({ mode: 'test', product_cart: [] });
-            setSessionId(sessionId);
+            const sessionUrl = await getCheckoutSession({ mode: 'test', product_cart: [] });
+            setSessionUrl(sessionUrl);
         } else {
-            const sessionId = await getCheckoutSession({
+            const sessionUrl = await getCheckoutSession({
                 mode: 'live',
                 product_cart: [{
                     product_id: productId,
                     quantity: 1,
                 }]
             });
-            setSessionId(sessionId);
+            setSessionUrl(sessionUrl);
         }
     }
 
@@ -92,7 +99,7 @@ function CheckoutPageContent() {
     }
 
     useEffect(() => {
-        if (!sessionId) return;
+        if (!sessionUrl) return;
 
         setFormReady(false);
         DodoPayments.Initialize({
@@ -121,7 +128,7 @@ function CheckoutPageContent() {
             }
         });
         DodoPayments.Checkout.open({
-            checkoutUrl: `https://checkout.dodopayments.com/session/${sessionId}`,
+            checkoutUrl: sessionUrl,
             elementId: 'dodo-inline-checkout',
             options: {
                 manualRedirect: true,
@@ -134,7 +141,7 @@ function CheckoutPageContent() {
             }
             DodoPayments.Checkout.close();
         };
-    }, [sessionId]);
+    }, [sessionUrl]);
 
     const format = (amt: number | null | undefined, curr: string | null | undefined) =>
         amt != null && curr ? `${curr} ${(amt / 100).toFixed(2)}` : '0.00';

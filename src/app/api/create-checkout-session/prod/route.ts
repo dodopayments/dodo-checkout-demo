@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
             redirect_url: body.redirect_url,
             customization: {
                 theme: 'light',
-                force_language: body.force_language ?? 'ko',
+                ...(body.force_language && { force_language: body.force_language }),
             },
             feature_flags: {
                 redirect_immediately: true,

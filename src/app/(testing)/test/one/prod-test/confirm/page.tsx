@@ -69,38 +69,6 @@ function CheckoutPageContent() {
     }
 
     useEffect(() => {
-        async function main() {
-            if (MODE === 'test') {
-                const sessionUrl = await getCheckoutSession({
-                    mode: 'test',
-                    product_cart: [{
-                        product_id: productId,
-                        quantity: 1,
-                    }]
-                });
-                setSessionUrl(sessionUrl);
-            } else {
-                const sessionUrl = await getCheckoutSession({ mode: 'live', product_cart: [] });
-                setSessionUrl(sessionUrl);
-            }
-        }
-        main();
-    }, [productId]);
-
-    function handleImmediateRedirect() {
-        if (redirectTimeoutRef.current) {
-            clearTimeout(redirectTimeoutRef.current);
-            redirectTimeoutRef.current = null;
-        }
-        if (redirectUrl) {
-            window.location.href = redirectUrl;
-        }
-    }
-
-    useEffect(() => {
-        if (!sessionUrl) return;
-
-        setFormReady(false);
         DodoPayments.Initialize({
             mode: MODE,
             displayType: 'inline',
@@ -110,7 +78,6 @@ function CheckoutPageContent() {
                     const message = event.data?.message as { redirect_to: string };
                     if (message) {
                         setRedirectUrl(message.redirect_to);
-                        // window.location.href = message.redirect_to;
                     }
                 }
                 if (event.event_type === "checkout.status") {
@@ -126,21 +93,37 @@ function CheckoutPageContent() {
                 }
             }
         });
-        DodoPayments.Checkout.open({
-            checkoutUrl: sessionUrl,
-            elementId: 'dodo-inline-checkout',
-            options: {
-                manualRedirect: true,
-            }
-        });
+        return () => DodoPayments.Checkout.close();
+    }, []);
 
-        return () => {
-            if (redirectTimeoutRef.current) {
-                clearTimeout(redirectTimeoutRef.current);
-            }
-            DodoPayments.Checkout.close();
-        };
-    }, [sessionUrl]);
+    async function handleOpenCheckout() {
+        setFormReady(false);
+        let url: string;
+        if (MODE === 'test') {
+            url = await getCheckoutSession({
+                mode: 'test',
+                product_cart: [{ product_id: productId, quantity: 1 }]
+            });
+        } else {
+            url = await getCheckoutSession({ mode: 'live', product_cart: [] });
+        }
+        setSessionUrl(url);
+        DodoPayments.Checkout.open({
+            checkoutUrl: url,
+            elementId: 'dodo-inline-checkout',
+            options: { manualRedirect: true }
+        });
+    }
+
+    function handleImmediateRedirect() {
+        if (redirectTimeoutRef.current) {
+            clearTimeout(redirectTimeoutRef.current);
+            redirectTimeoutRef.current = null;
+        }
+        if (redirectUrl) {
+            window.location.href = redirectUrl;
+        }
+    }
 
     const format = (amt: number | null | undefined, curr: string | null | undefined) =>
         amt != null && curr ? `${curr} ${(amt / 100).toFixed(2)}` : '0.00';
@@ -150,13 +133,18 @@ function CheckoutPageContent() {
     return (
         <div className="flex flex-col md:flex-row min-h-screen">
             {/* Left Side - Checkout Form */}
-            <div className="w-full md:w-1/2 flex items-center">
-                {!formReady && (
+            <div className="w-full md:w-1/2 flex flex-col items-center gap-4 p-4">
+                {sessionUrl && !formReady && (
                     <div className="flex items-center justify-center w-full min-h-[200px]">
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900" />
                     </div>
                 )}
-                <div id="dodo-inline-checkout" className={`w-full ${formReady ? 'block' : 'hidden'}`} />
+                {/* Target must always be in DOM for Checkout.open() to find it */}
+                <div
+                    id="dodo-inline-checkout"
+                    className={`w-full ${sessionUrl && formReady ? 'block' : 'hidden'}`}
+                    aria-hidden={!sessionUrl}
+                />
             </div>
 
             {/* Right Side - Custom Order Summary */}
@@ -189,6 +177,15 @@ function CheckoutPageContent() {
                         </div>
                     )}
                 </div>
+                {!sessionUrl && (
+                    <button
+                        type="button"
+                        onClick={handleOpenCheckout}
+                        className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 font-medium mt-4"
+                    >
+                        Open Checkout
+                    </button>
+                )}
             </div>
             <div className="w-full md:w-1/2 p-8 bg-gray-50">
                 <h2 className="text-2xl font-bold mb-4">Latest Checkout Status</h2>

@@ -29,10 +29,14 @@ function CheckoutPageContent() {
 
     const productId = PRODUCT_IDS[CATEGORY][ENV][MODE];
     const theme = searchParams.get('theme') || 'light';
+    const forceLanguage = searchParams.get('force_language');
 
     async function getCheckoutSession({ mode, product_cart }: CheckoutSessionParams) {
         const themeParam = theme === 'dark' ? 'dark' : 'light';
-        const res = await fetch(`/api/create-checkout-session/${ENV}?theme=${themeParam}`, {
+        const apiUrl = new URL(`/api/create-checkout-session/${ENV}`, window.location.origin);
+        apiUrl.searchParams.set('theme', themeParam);
+        if (forceLanguage) apiUrl.searchParams.set('force_language', forceLanguage);
+        const res = await fetch(apiUrl.toString(), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

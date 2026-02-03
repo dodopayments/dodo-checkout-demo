@@ -19,6 +19,7 @@ export async function POST(request: NextRequest) {
         }
 
         const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+        const forceLanguage = request.nextUrl.searchParams.get('force_language');
 
         // Build payload according to Create Checkout Session
         const payload: Record<string, unknown> = {
@@ -27,7 +28,7 @@ export async function POST(request: NextRequest) {
             redirect_url: body.redirect_url,
             customization: {
                 theme: 'light',
-                force_language: 'ko',
+                force_language: forceLanguage ?? 'ko',
             },
             feature_flags: {
                 redirect_immediately: true,

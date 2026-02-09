@@ -1,5 +1,6 @@
 {
   "lockfileVersion": 1,
+  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "dodo-checkout-demo",
@@ -22,6 +23,7 @@
         "cobe": "^0.6.5",
         "dodopayments-checkout": "^1.8.0",
         "dodopayments-checkout-apple": "file:dodopayments-checkout-apple-1.7.9.tgz",
+        "dodopayments-checkout-test-tech": "file:dodopayments-checkout-test-tech-1.8.2.tgz",
         "mongoose": "^8.0.0",
         "next": "15.1.11",
         "next-auth": "^5.0.0-beta.25",
@@ -174,6 +176,8 @@
     "@nodelib/fs.walk": ["@nodelib/fs.walk@1.2.8", "", { "dependencies": { "@nodelib/fs.scandir": "2.1.5", "fastq": "^1.6.0" } }, "sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg=="],
 
     "@nolyfill/is-core-module": ["@nolyfill/is-core-module@1.0.39", "", {}, "sha512-nn5ozdjYQpUCZlWGuxcJY/KpxkWQs4DcbMCmKojjyrYDEAGy4Ce19NN4v5MduafTwJlbKc99UA8YhSVqq9yPZA=="],
+
+    "@open-iframe-resizer/core": ["@open-iframe-resizer/core@2.3.1", "", {}, "sha512-wpprXkDKQiGiryQabyw0R27/XEYHPJt2bAbbG++vqDA6uOtwoSfRJGgjTYsA6OV+05ZwP9Em90jacg9vvU36Yg=="],
 
     "@panva/hkdf": ["@panva/hkdf@1.2.1", "", {}, "sha512-6oclG6Y3PiDFcoyk8srjLfVKyMfVCKJ27JwNPViuXziFpmdz+MZnZN/aKY0JGXgYuO/VghU0jcOAZgWXZ1Dmrw=="],
 
@@ -522,6 +526,8 @@
     "dodopayments-checkout": ["dodopayments-checkout@1.8.0", "", { "dependencies": { "@iframe-resizer/parent": "^5.5.7" } }, "sha512-KvQfzGpSPzV0GITSBHvSmDQehGhx6R8XtpuLgvt0RuyxrvumDBboE9/5Iv1sd98cVXeeSl3B6OeVIo4IQmXDdQ=="],
 
     "dodopayments-checkout-apple": ["dodopayments-checkout-apple@dodopayments-checkout-apple-1.7.9.tgz", { "dependencies": { "@iframe-resizer/parent": "^5.5.7" } }],
+
+    "dodopayments-checkout-test-tech": ["dodopayments-checkout-test-tech@dodopayments-checkout-test-tech-1.8.2.tgz", { "dependencies": { "@open-iframe-resizer/core": "^2.3.1" } }],
 
     "dom-serializer": ["dom-serializer@2.0.0", "", { "dependencies": { "domelementtype": "^2.3.0", "domhandler": "^5.0.2", "entities": "^4.2.0" } }, "sha512-wIkAryiqt/nV5EQKqQpo3SToSOV9J0DnbJqwK7Wv/Trc92zIAYZ4FlMu+JPFW1DfGFt81ZTCGgDEabffXeLyJg=="],
 

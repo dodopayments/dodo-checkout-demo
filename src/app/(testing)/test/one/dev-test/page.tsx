@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { DodoPayments, CheckoutBreakdownData } from 'dodopayments-checkout-apple';
+import { DodoPayments, CheckoutBreakdownData } from 'dodopayments-checkout-test-tech';
 import { PRODUCT_IDS } from '@/lib/product-ids';
 
 interface CheckoutSessionParams {

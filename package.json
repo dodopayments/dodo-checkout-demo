@@ -29,6 +29,7 @@
     "dodopayments-checkout-apple": "file:dodopayments-checkout-apple-1.7.9.tgz",
     "dodopayments-checkout-test-tech": "file:dodopayments-checkout-test-tech-1.8.2.tgz",
     "dodopayments-checkout-testing": "file:dodopayments-checkout-testing-1.8.2.tgz",
+    "dodopayments-checkout-testingss": "file:dodopayments-checkout-testingss-1.8.2.tgz",
     "mongoose": "^8.0.0",
     "next": "15.1.11",
     "next-auth": "^5.0.0-beta.25",

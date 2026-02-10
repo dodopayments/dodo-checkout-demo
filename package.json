@@ -27,6 +27,7 @@
     "cobe": "^0.6.5",
     "dodopayments-checkout": "^1.8.0",
     "dodopayments-checkout-apple": "file:dodopayments-checkout-apple-1.7.9.tgz",
+    "dodopayments-checkout-old-testing": "file:dodopayments-checkout-old-testing-1.8.8.tgz",
     "dodopayments-checkout-test-tech": "file:dodopayments-checkout-test-tech-1.8.2.tgz",
     "dodopayments-checkout-testing": "file:dodopayments-checkout-testing-1.8.2.tgz",
     "dodopayments-checkout-testingss": "file:dodopayments-checkout-testingss-1.8.2.tgz",

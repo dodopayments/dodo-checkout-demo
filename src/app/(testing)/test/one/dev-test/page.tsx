@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { DodoPayments, CheckoutBreakdownData } from 'dodopayments-checkout-test-tech';
+import { DodoPayments, CheckoutBreakdownData } from 'dodopayments-checkout-testing';
 import { PRODUCT_IDS } from '@/lib/product-ids';
 
 interface CheckoutSessionParams {
@@ -29,6 +29,9 @@ function CheckoutPageContent() {
 
     const productId = PRODUCT_IDS[CATEGORY][ENV][MODE];
     const theme = searchParams.get('theme') || 'light';
+    const isDark = theme === 'dark';
+    const mainBgClass = isDark ? 'bg-gray-900 text-white' : 'bg-white text-gray-900';
+    const panelBgClass = isDark ? 'bg-gray-800' : 'bg-gray-50';
 
     async function getCheckoutSession({ mode, product_cart }: CheckoutSessionParams) {
         const themeParam = theme === 'dark' ? 'dark' : 'light';
@@ -123,14 +126,14 @@ function CheckoutPageContent() {
     const currency = breakdown.currency ?? breakdown.finalTotalCurrency ?? '';
 
     return (
-        <div className="flex flex-col md:flex-row min-h-screen">
+        <div className={`flex flex-col md:flex-row min-h-screen ${mainBgClass}`}>
             {/* Left Side - Checkout Form */}
             <div className="w-full md:w-1/2 flex items-center">
                 <div id="dodo-inline-checkout" className='w-full' />
             </div>
 
             {/* Right Side - Custom Order Summary */}
-            <div className="w-full md:w-1/2 p-8 bg-gray-50">
+            <div className={`w-full md:w-1/2 p-8 ${panelBgClass}`}>
                 <h2 className="text-2xl font-bold mb-4">Order Summary</h2>
                 <div className="space-y-2">
                     {breakdown.subTotal && (
@@ -160,12 +163,12 @@ function CheckoutPageContent() {
                     )}
                 </div>
             </div>
-            <div className="w-full md:w-1/2 p-8 bg-gray-50">
+            <div className={`w-full md:w-1/2 p-8 ${panelBgClass}`}>
                 <h2 className="text-2xl font-bold mb-4">Latest Checkout Status</h2>
                 <p>{checkoutStatus}</p>
             </div>
             {redirectUrl && (
-                <div className="w-full md:w-1/2 p-8 bg-gray-50">
+                <div className={`w-full md:w-1/2 p-8 ${panelBgClass}`}>
                     <h2 className="text-2xl font-bold mb-4">Redirect Request</h2>
                     <p className="mb-4">{redirectUrl}</p>
                     <button

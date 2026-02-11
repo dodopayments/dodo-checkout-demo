@@ -5,6 +5,10 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
 
     const mode: "test" | "live" = body.mode;
+    let isLocal = false;
+    if (body.local !== undefined) {
+      isLocal = body.local;
+    }
 
     // Get theme from query parameter, default to "light" if not provided or invalid
     const themeParam = request.nextUrl.searchParams.get("theme");
@@ -30,10 +34,10 @@ export async function POST(request: NextRequest) {
       product_cart: body.product_cart,
       return_url: body.return_url || `${appUrl}/pricing`,
       redirect_url: body.redirect_url,
-      confirm: body.confirm ?? true,
-      customer: body.customer ?? null,
-      billing_address: body.billing_address ?? null,
-      minimal_address: body.minimal_address ?? true,
+      ...(body.confirm !== undefined && { confirm: body.confirm }),
+      ...(body.customer !== undefined && { customer: body.customer }),
+      ...(body.billing_address !== undefined && { billing_address: body.billing_address }),
+      ...(body.minimal_address !== undefined && { minimal_address: body.minimal_address }),
       customization: { force_language: "en", theme },
       feature_flags: {
         redirect_immediately: true,
@@ -68,10 +72,11 @@ export async function POST(request: NextRequest) {
         { status: response.status }
       );
     }
+    console.log("json", json);
 
     return NextResponse.json({
       success: true,
-      checkout_url: json.checkout_url,
+      checkout_url: isLocal ? `http://localhost:3000/session/${json.session_id}` : json.checkout_url,
       session_id: json.session_id,
       mode,
     });

@@ -23,7 +23,12 @@
         "cobe": "^0.6.5",
         "dodopayments-checkout": "^1.8.0",
         "dodopayments-checkout-apple": "file:dodopayments-checkout-apple-1.7.9.tgz",
+        "dodopayments-checkout-old-testing": "file:dodopayments-checkout-old-testing-1.8.8.tgz",
         "dodopayments-checkout-test-tech": "file:dodopayments-checkout-test-tech-1.8.2.tgz",
+        "dodopayments-checkout-testing": "file:dodopayments-checkout-testing-1.8.2.tgz",
+        "dodopayments-checkout-testing-local": "file:dodopayments-checkout-testing-local-1.9.0.tgz",
+        "dodopayments-checkout-testing-local-old": "file:dodopayments-checkout-testing-local-old-1.7.1.tgz",
+        "dodopayments-checkout-testingss": "file:dodopayments-checkout-testingss-1.8.2.tgz",
         "mongoose": "^8.0.0",
         "next": "15.1.11",
         "next-auth": "^5.0.0-beta.25",
@@ -527,7 +532,17 @@
 
     "dodopayments-checkout-apple": ["dodopayments-checkout-apple@dodopayments-checkout-apple-1.7.9.tgz", { "dependencies": { "@iframe-resizer/parent": "^5.5.7" } }],
 
+    "dodopayments-checkout-old-testing": ["dodopayments-checkout-old-testing@dodopayments-checkout-old-testing-1.8.8.tgz", { "dependencies": { "@iframe-resizer/parent": "^5.5.7" } }],
+
     "dodopayments-checkout-test-tech": ["dodopayments-checkout-test-tech@dodopayments-checkout-test-tech-1.8.2.tgz", { "dependencies": { "@open-iframe-resizer/core": "^2.3.1" } }],
+
+    "dodopayments-checkout-testing": ["dodopayments-checkout-testing@dodopayments-checkout-testing-1.8.2.tgz", { "dependencies": { "@open-iframe-resizer/core": "^2.3.1" } }],
+
+    "dodopayments-checkout-testing-local": ["dodopayments-checkout-testing-local@dodopayments-checkout-testing-local-1.9.0.tgz", { "dependencies": { "@open-iframe-resizer/core": "^2.3.1" } }],
+
+    "dodopayments-checkout-testing-local-old": ["dodopayments-checkout-testing-local-old@dodopayments-checkout-testing-local-old-1.7.1.tgz", { "dependencies": { "@iframe-resizer/parent": "^5.5.7" } }],
+
+    "dodopayments-checkout-testingss": ["dodopayments-checkout-testingss@dodopayments-checkout-testingss-1.8.2.tgz", { "dependencies": { "@open-iframe-resizer/core": "^2.3.1" } }],
 
     "dom-serializer": ["dom-serializer@2.0.0", "", { "dependencies": { "domelementtype": "^2.3.0", "domhandler": "^5.0.2", "entities": "^4.2.0" } }, "sha512-wIkAryiqt/nV5EQKqQpo3SToSOV9J0DnbJqwK7Wv/Trc92zIAYZ4FlMu+JPFW1DfGFt81ZTCGgDEabffXeLyJg=="],
 

@@ -30,6 +30,10 @@ export async function POST(request: NextRequest) {
       product_cart: body.product_cart,
       return_url: body.return_url || `${appUrl}/pricing`,
       redirect_url: body.redirect_url,
+      confirm: body.confirm ?? true,
+      customer: body.customer ?? null,
+      billing_address: body.billing_address ?? null,
+      minimal_address: body.minimal_address ?? true,
       customization: { force_language: "en", theme },
       feature_flags: {
         redirect_immediately: true,

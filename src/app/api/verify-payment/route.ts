@@ -279,9 +279,9 @@ async function updateUserPaymentStatus(
     updateData.customerId = customerId
   }
 
-  // Add credits only for explicit Credit Pack purchases
+  // Add credits only for explicit Image Bundle purchases
   // Only add credits if this payment hasn't been processed yet (check by payment ID)
-  if (paymentType === 'one-time' && (metadata?.plan === 'Credit Pack' || typeof metadata?.credits !== 'undefined')) {
+  if (paymentType === 'one-time' && (metadata?.plan === 'One-Time Payment' || typeof metadata?.credits !== 'undefined')) {
     const user = await usersCollection.findOne({ email })
     
     // Only add credits if this is a new payment (payment ID doesn't match last processed payment)
@@ -308,7 +308,8 @@ function determinePaymentType(
   if (metadata.billing_type === 'usage_based') return 'usage-based'
   if (metadata.billing_type === 'subscription') return 'subscription'
   if (metadata.plan === 'Pay Per Image') return 'usage-based'
-  if (metadata.plan === 'Credit Pack') return 'one-time'
+  if (metadata.plan === 'One-Time Payment') return 'one-time'
+  if (metadata.billing_type === 'credit_based') return 'subscription'
   if (metadata.plan === 'Unlimited Pro') return 'subscription'
 
   if (data.subscription_id || data.subscription) {

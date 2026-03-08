@@ -751,16 +751,26 @@ export default function Pricing() {
     setIsLoading(planName);
 
     try {
+      const creditBasedProductId =
+        billingFrequency === "monthly"
+          ? process.env.NEXT_PUBLIC_PRODUCT_ID_CREDIT_BASED
+          : process.env.NEXT_PUBLIC_PRODUCT_ID_CREDIT_BASED_ANNUAL;
+
+      if (!creditBasedProductId) {
+        setErrorMessage(`Credit Pack ${billingFrequency} product ID is not configured.`);
+        setShowError(true);
+        setTimeout(() => setShowError(false), 5000);
+        setIsLoading(null);
+        return;
+      }
+
       const response = await fetch("/api/create-checkout-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           product_cart: [
             {
-              product_id:
-                billingFrequency === "monthly"
-                  ? process.env.NEXT_PUBLIC_PRODUCT_ID_CREDIT_BASED
-                  : (process.env.NEXT_PUBLIC_PRODUCT_ID_CREDIT_BASED_ANNUAL || process.env.NEXT_PUBLIC_PRODUCT_ID_CREDIT_BASED),
+              product_id: creditBasedProductId,
               quantity: 1,
             },
           ],

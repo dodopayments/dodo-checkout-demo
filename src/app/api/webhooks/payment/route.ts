@@ -88,9 +88,9 @@ async function handlePaymentSuccess(data: PaymentWebhookData) {
     paymentMetadata: metadata,
   }
 
-  // If it's a Credit Pack purchase, add credits to the user's balance
+  // If it's an Image Bundle purchase, add credits to the user's balance
   // Only add credits if this payment hasn't been processed yet (check by payment ID)
-  if (paymentType === 'one-time' && (metadata.plan === 'Credit Pack' || typeof metadata.credits !== 'undefined')) {
+  if (paymentType === 'one-time' && (metadata.plan === 'One-Time Payment' || typeof metadata.credits !== 'undefined')) {
     const paymentId = data.payment_id || data.id || data.data?.object?.id
     
     // Get current user to check if this payment was already processed
@@ -126,21 +126,29 @@ async function handleSubscriptionCreated(data: PaymentWebhookData) {
 
   const metadata = data.metadata || data.data?.object?.metadata || {}
   const billingType = metadata.billing_type || 'subscription'
-  
-  // Determine if it's usage-based or regular subscription
+
+  // Determine if it's usage-based, credit-based, or regular subscription
   const paymentType = billingType === 'usage_based' ? 'usage-based' : 'subscription'
+
+  const updateFields: Record<string, unknown> = {
+    payment: 'paid',
+    paymentType: paymentType,
+    subscriptionId: data.subscription_id || data.id || data.data?.object?.id,
+    subscriptionStatus: 'active',
+    paymentDate: new Date(),
+    paymentMetadata: metadata,
+  }
+
+  // For credit-based billing, store the Dodo customer_id for balance lookups
+  const customerId = data.customer?.email ? undefined : (data as Record<string, unknown>).customer_id as string | undefined
+  if (billingType === 'credit_based' && customerId) {
+    updateFields.dodoCustomerId = customerId
+  }
 
   await usersCollection.updateOne(
     { email: customerEmail },
     {
-      $set: {
-        payment: 'paid',
-        paymentType: paymentType,
-        subscriptionId: data.subscription_id || data.id || data.data?.object?.id,
-        subscriptionStatus: 'active',
-        paymentDate: new Date(),
-        paymentMetadata: metadata,
-      },
+      $set: updateFields,
       $setOnInsert: { email: customerEmail },
     },
     { upsert: true }
@@ -188,8 +196,12 @@ function determinePaymentType(
     return 'usage-based'
   }
   
-  if (metadata.plan === 'Credit Pack') {
+  if (metadata.plan === 'One-Time Payment') {
     return 'one-time'
+  }
+
+  if (metadata.billing_type === 'credit_based') {
+    return 'subscription'
   }
   
   if (metadata.plan === 'Unlimited Pro') {

@@ -44,6 +44,12 @@ export default function Dashboard() {
     totalCredits: 0,
   })
 
+  const [creditBalance, setCreditBalance] = useState<{
+    balance: number
+    subscribed: boolean
+    loading: boolean
+  }>({ balance: 0, subscribed: false, loading: false })
+
   // Plan-specific configuration
   const getPlanConfig = () => {
     const type = paymentStatus.paymentType
@@ -59,10 +65,22 @@ export default function Dashboard() {
         billingMessage: 'Each image generation costs $0.75. You\'ll be billed at the end of your billing cycle.',
         upgradeMessage: 'Need unlimited? Check out our Unlimited Pro plan.'
       }
-    } else if (type === 'one-time') {
+    } else if (type === 'credit-based') {
       return {
         name: 'Credit Pack',
-        displayName: 'Credit Pack (One-Time)',
+        displayName: 'Credit Pack (Credit-Based)',
+        costPerImage: 0,
+        showUsageCost: false,
+        showCredits: false,
+        showNativeCredits: true,
+        isUnlimited: false,
+        billingMessage: `You have ${creditBalance.balance} AI credits remaining this month.`,
+        upgradeMessage: creditBalance.balance <= 10 ? 'Running low on credits. Top up or upgrade.' : null,
+      }
+    } else if (type === 'one-time') {
+      return {
+        name: 'Image Bundle',
+        displayName: 'Image Bundle (One-Time)',
         costPerImage: 0.70, // $7 for 10 images
         showUsageCost: false,
         showCredits: true,
@@ -205,6 +223,18 @@ export default function Dashboard() {
         // Store customer ID for usage tracking if available
         if (data.customerId) {
           sessionStorage.setItem('dodo_customer_id', data.customerId)
+        }
+
+        // Fetch native Dodo credit balance for credit-based plan users
+        if (data.paymentType === 'subscription' && data.paymentMetadata?.billing_type === 'credit_based') {
+          setCreditBalance(prev => ({ ...prev, loading: true }))
+          try {
+            const balanceRes = await fetch('/api/check-credit-balance')
+            const balanceData = await balanceRes.json()
+            setCreditBalance({ balance: balanceData.balance ?? 0, subscribed: balanceData.subscribed ?? false, loading: false })
+          } catch {
+            setCreditBalance({ balance: 0, subscribed: false, loading: false })
+          }
         }
 
         // Redirect to pricing if not paid
@@ -569,13 +599,15 @@ export default function Dashboard() {
                   <div className="ml-5 w-0 flex-1">
                     <dl>
                       <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                        {planConfig.showCredits ? 'Credits Left' : planConfig.isUnlimited ? 'Plan Status' : 'Usage Cost'}
+                        {planConfig.showCredits ? 'Credits Left' : planConfig.isUnlimited ? 'Plan Status' : (planConfig as {showNativeCredits?: boolean}).showNativeCredits ? 'AI Credits' : 'Usage Cost'}
                       </dt>
                       <dd className="text-2xl font-bold text-gray-900 dark:text-white">
                         {planConfig.isUnlimited ? (
                           <span className="text-lg">Unlimited</span>
                         ) : planConfig.showCredits ? (
                           `${Math.max(0, (planConfig.creditsTotal || 10) - usageStats.imagesGenerated)} / ${planConfig.creditsTotal || 10}`
+                        ) : (planConfig as {showNativeCredits?: boolean}).showNativeCredits ? (
+                          creditBalance.loading ? '...' : `${creditBalance.balance}`
                         ) : (
                           `$${usageStats.totalUsageCost.toFixed(2)}`
                         )}

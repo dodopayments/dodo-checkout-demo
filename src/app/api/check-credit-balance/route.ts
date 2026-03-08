@@ -1,8 +1,8 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/../auth'
 import clientPromise from '@/lib/mongo'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const session = await auth()
     if (!session?.user?.email) {
@@ -10,7 +10,12 @@ export async function GET() {
     }
 
     const bearerToken = process.env.DODO_PAYMENTS_API_KEY
-    const entitlementId = process.env.CREDIT_ENTITLEMENT_ID
+
+    // Pick entitlement ID based on type query param
+    const type = request.nextUrl.searchParams.get('type')
+    const entitlementId = type === 'one-time'
+      ? process.env.CREDIT_ENTITLEMENT_ID_ONE_TIME
+      : process.env.CREDIT_ENTITLEMENT_ID
 
     if (!bearerToken || !entitlementId) {
       return NextResponse.json({ error: 'Server configuration missing' }, { status: 500 })

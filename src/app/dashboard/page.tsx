@@ -37,11 +37,9 @@ export default function Dashboard() {
     imagesGenerated: number
     totalUsageCost: number
     lastImageGenerated?: Date
-    totalCredits: number
   }>({
     imagesGenerated: 0,
     totalUsageCost: 0,
-    totalCredits: 0,
   })
 
   const [creditBalance, setCreditBalance] = useState<{
@@ -79,15 +77,15 @@ export default function Dashboard() {
       }
     } else if (type === 'one-time') {
       return {
-        name: 'Image Bundle',
-        displayName: 'Image Bundle (One-Time)',
-        costPerImage: 0.70, // $7 for 10 images
+        name: 'One-Time Payment',
+        displayName: 'One-Time Payment (Image Bundle)',
+        costPerImage: 0,
         showUsageCost: false,
-        showCredits: true,
-        creditsTotal: usageStats.totalCredits || 10, // Use actual total credits from purchases
+        showCredits: false,
+        showNativeCredits: true,
         isUnlimited: false,
-        billingMessage: `You have ${Math.max(0, (usageStats.totalCredits || 10) - usageStats.imagesGenerated)} credits remaining.`,
-        upgradeMessage: 'Running low? Purchase another pack or upgrade to Unlimited Pro.'
+        billingMessage: `You have ${creditBalance.balance} credits remaining. Credits never expire.`,
+        upgradeMessage: creditBalance.balance <= 2 ? 'Running low? Purchase another bundle or upgrade.' : null,
       }
     } else if (type === 'subscription') {
       return {
@@ -217,7 +215,6 @@ export default function Dashboard() {
           imagesGenerated: data.imagesGenerated || 0,
           totalUsageCost: data.totalUsageCost || 0,
           lastImageGenerated: data.lastImageGenerated ? new Date(data.lastImageGenerated) : undefined,
-          totalCredits: data.totalCredits || 0,
         })
 
         // Store customer ID for usage tracking if available
@@ -225,11 +222,12 @@ export default function Dashboard() {
           sessionStorage.setItem('dodo_customer_id', data.customerId)
         }
 
-        // Fetch native Dodo credit balance for credit-based plan users
-        if (data.paymentType === 'subscription' && data.paymentMetadata?.billing_type === 'credit_based') {
+        // Fetch native Dodo credit balance for credit-based and one-time plan users
+        if (data.dodoCustomerId && (data.paymentType === 'credit-based' || data.paymentType === 'one-time')) {
           setCreditBalance(prev => ({ ...prev, loading: true }))
+          const balanceType = data.paymentType === 'one-time' ? 'one-time' : 'credit-based'
           try {
-            const balanceRes = await fetch('/api/check-credit-balance')
+            const balanceRes = await fetch(`/api/check-credit-balance?type=${balanceType}`)
             const balanceData = await balanceRes.json()
             setCreditBalance({ balance: balanceData.balance ?? 0, subscribed: balanceData.subscribed ?? false, loading: false })
           } catch {
@@ -353,12 +351,11 @@ export default function Dashboard() {
 
         if (trackData.success) {
           // Update usage stats from database response
-          setUsageStats(prev => ({
+          setUsageStats({
             imagesGenerated: trackData.usage.imagesGenerated,
             totalUsageCost: trackData.usage.totalUsageCost,
             lastImageGenerated: new Date(trackData.usage.lastImageGenerated),
-            totalCredits: prev.totalCredits, // Keep existing totalCredits
-          }))
+          })
         }
       } catch (err) {
         console.error('Error tracking usage in database:', err)
@@ -599,13 +596,11 @@ export default function Dashboard() {
                   <div className="ml-5 w-0 flex-1">
                     <dl>
                       <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                        {planConfig.showCredits ? 'Credits Left' : planConfig.isUnlimited ? 'Plan Status' : (planConfig as {showNativeCredits?: boolean}).showNativeCredits ? 'AI Credits' : 'Usage Cost'}
+                        {planConfig.isUnlimited ? 'Plan Status' : (planConfig as {showNativeCredits?: boolean}).showNativeCredits ? 'AI Credits' : 'Usage Cost'}
                       </dt>
                       <dd className="text-2xl font-bold text-gray-900 dark:text-white">
                         {planConfig.isUnlimited ? (
                           <span className="text-lg">Unlimited</span>
-                        ) : planConfig.showCredits ? (
-                          `${Math.max(0, (planConfig.creditsTotal || 10) - usageStats.imagesGenerated)} / ${planConfig.creditsTotal || 10}`
                         ) : (planConfig as {showNativeCredits?: boolean}).showNativeCredits ? (
                           creditBalance.loading ? '...' : `${creditBalance.balance}`
                         ) : (
@@ -705,91 +700,22 @@ export default function Dashboard() {
             <div className="space-y-6">
 
               {/* Low Credits Warning */}
-              {planConfig.showCredits && (
-                <>
-                  {usageStats.imagesGenerated >= usageStats.totalCredits && (
-                    <div className="rounded-lg bg-red-50 p-4 border border-red-200 dark:bg-red-900/20 dark:border-red-800">
-                      <div className="flex">
-                        <div className="flex-shrink-0">
-                          <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                          </svg>
-                        </div>
-                        <div className="ml-3 flex-1">
-                          <h3 className="text-sm font-medium text-red-800 dark:text-red-400">
-                            No Credits Remaining
-                          </h3>
-                          <p className="mt-1 text-sm text-red-700 dark:text-red-300">
-                            You&apos;ve used all {usageStats.totalCredits} credits. Purchase more credits or upgrade to unlimited generation.
-                          </p>
-                          <div className="mt-3">
-                            <Button
-                              onClick={() => router.push('/pricing')}
-                              variant="secondary"
-                              className="text-sm"
-                            >
-                              View Plans
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  {usageStats.imagesGenerated >= usageStats.totalCredits - 2 && usageStats.imagesGenerated < usageStats.totalCredits && (
-                    <div className="rounded-lg bg-yellow-50 p-4 border border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800">
-                      <div className="flex">
-                        <div className="flex-shrink-0">
-                          <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                          </svg>
-                        </div>
-                        <div className="ml-3">
-                          <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-400">
-                            Low Credits Warning
-                          </h3>
-                          <p className="mt-1 text-sm text-yellow-700 dark:text-yellow-300">
-                            You only have {Math.max(0, usageStats.totalCredits - usageStats.imagesGenerated)} credit{Math.max(0, usageStats.totalCredits - usageStats.imagesGenerated) !== 1 ? 's' : ''} remaining. Consider purchasing more or upgrading to unlimited.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </>
-              )}
-
               {/* Info Banner */}
               <div className={`rounded-lg p-4 border ${planConfig.isUnlimited
                   ? 'bg-lime-50 border-lime-200 dark:bg-lime-900/20 dark:border-lime-800'
-                  : planConfig.showCredits
-                    ? 'bg-purple-50 border-purple-200 dark:bg-purple-900/20 dark:border-purple-800'
-                    : 'bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800'
+                  : 'bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800'
                 }`}>
                 <div className="flex">
                   <div className="flex-shrink-0">
-                    <svg className={`h-5 w-5 ${planConfig.isUnlimited
-                        ? 'text-lime-400'
-                        : planConfig.showCredits
-                          ? 'text-purple-400'
-                          : 'text-blue-400'
-                      }`} viewBox="0 0 20 20" fill="currentColor">
+                    <svg className={`h-5 w-5 ${planConfig.isUnlimited ? 'text-lime-400' : 'text-blue-400'}`} viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                     </svg>
                   </div>
                   <div className="ml-3">
-                    <h3 className={`text-sm font-medium ${planConfig.isUnlimited
-                        ? 'text-lime-800 dark:text-lime-400'
-                        : planConfig.showCredits
-                          ? 'text-purple-800 dark:text-purple-400'
-                          : 'text-blue-800 dark:text-blue-400'
-                      }`}>
+                    <h3 className={`text-sm font-medium ${planConfig.isUnlimited ? 'text-lime-800 dark:text-lime-400' : 'text-blue-800 dark:text-blue-400'}`}>
                       {planConfig.name}
                     </h3>
-                    <p className={`mt-1 text-sm ${planConfig.isUnlimited
-                        ? 'text-lime-700 dark:text-lime-300'
-                        : planConfig.showCredits
-                          ? 'text-purple-700 dark:text-purple-300'
-                          : 'text-blue-700 dark:text-blue-300'
-                      }`}>
+                    <p className={`mt-1 text-sm ${planConfig.isUnlimited ? 'text-lime-700 dark:text-lime-300' : 'text-blue-700 dark:text-blue-300'}`}>
                       {planConfig.billingMessage}
                       {planConfig.upgradeMessage && (
                         <> {planConfig.upgradeMessage.includes('Unlimited Pro') ? (
@@ -834,7 +760,7 @@ export default function Dashboard() {
                     </div>
                     <Button
                       onClick={generateImage}
-                      disabled={isGenerating || (isTracking && planConfig.name === 'Pay Per Image') || !prompt.trim() || (planConfig.showCredits && usageStats.imagesGenerated >= usageStats.totalCredits)}
+                      disabled={isGenerating || (isTracking && planConfig.name === 'Pay Per Image') || !prompt.trim()}
                       className="px-6 py-3"
                     >
                       {isGenerating ? (
@@ -845,19 +771,12 @@ export default function Dashboard() {
                           </svg>
                           Generating...
                         </>
-                      ) : planConfig.showCredits && usageStats.imagesGenerated >= usageStats.totalCredits ? (
-                        <>
-                          <svg className="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                          </svg>
-                          No Credits Left
-                        </>
                       ) : (
                         <>
                           <svg className="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                           </svg>
-                          {planConfig.isUnlimited ? 'Generate Image' : planConfig.showCredits ? 'Use 1 Credit' : `Generate Image ($${planConfig.costPerImage.toFixed(2)})`}
+                          {planConfig.isUnlimited || planConfig.costPerImage === 0 ? 'Generate Image' : `Generate Image ($${planConfig.costPerImage.toFixed(2)})`}
                         </>
                       )}
                     </Button>
@@ -981,7 +900,7 @@ export default function Dashboard() {
                         <div>
                           <span className="text-sm text-gray-500 dark:text-gray-400">Cost</span>
                           <p className="text-sm font-medium text-gray-900 dark:text-white">
-                            {planConfig.isUnlimited ? 'Free' : planConfig.showCredits ? '1 Credit' : `$${planConfig.costPerImage.toFixed(2)}`}
+                            {planConfig.isUnlimited || planConfig.costPerImage === 0 ? 'Free' : `$${planConfig.costPerImage.toFixed(2)}`}
                           </p>
                         </div>
                       </div>
@@ -1094,19 +1013,14 @@ export default function Dashboard() {
                   <div className="flex justify-between items-center">
                     <div>
                       <p className="text-sm font-medium text-gray-900 dark:text-white">
-                        {planConfig.isUnlimited ? 'Unlimited Plan' : planConfig.showCredits ? 'Credits Used' : 'Current Usage'}
+                        {planConfig.isUnlimited ? 'Unlimited Plan' : 'Current Usage'}
                       </p>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
-                        {planConfig.isUnlimited ? 'Unlimited images' : `${usageStats.imagesGenerated} ${planConfig.showCredits ? `/ ${usageStats.totalCredits}` : ''} images generated`}
+                        {planConfig.isUnlimited ? 'Unlimited images' : `${usageStats.imagesGenerated} images generated`}
                       </p>
                     </div>
                     <span className="text-lg font-bold text-gray-900 dark:text-white">
-                      {planConfig.isUnlimited ?
-                        '∞' :
-                        planConfig.showCredits ?
-                          `${Math.max(0, usageStats.totalCredits - usageStats.imagesGenerated)} left` :
-                          `$${usageStats.totalUsageCost.toFixed(2)}`
-                      }
+                      {planConfig.isUnlimited ? '∞' : `$${usageStats.totalUsageCost.toFixed(2)}`}
                     </span>
                   </div>
                   {!planConfig.isUnlimited && (
@@ -1116,7 +1030,7 @@ export default function Dashboard() {
                         variant="secondary"
                         className="w-full"
                       >
-                        {planConfig.showCredits ? 'Buy More Credits or Upgrade' : 'Upgrade to Unlimited Pro'}
+                        Upgrade to Unlimited Pro
                       </Button>
                     </div>
                   )}

@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     const hasPaid = user.payment === 'paid'
 
     // Derive payment type dynamically (do not rely on stored paymentType)
-    let derivedPaymentType: 'one-time' | 'subscription' | 'usage-based' | undefined
+    let derivedPaymentType: 'one-time' | 'subscription' | 'usage-based' | 'credit-based' | undefined
     type PaymentMetadata = {
       plan?: string
       billing_type?: 'usage_based' | 'subscription' | string
@@ -43,9 +43,11 @@ export async function POST(request: NextRequest) {
     const billingType = metadata.billing_type
     const subStatus = user.subscriptionStatus as string | undefined
 
-    if (subStatus === 'active' || subStatus === 'trialing' || plan === 'Unlimited Pro' || billingType === 'subscription') {
+    if (billingType === 'credit_based' || plan === 'Credit Pack') {
+      derivedPaymentType = 'credit-based'
+    } else if (subStatus === 'active' || subStatus === 'trialing' || plan === 'Unlimited Pro' || billingType === 'subscription') {
       derivedPaymentType = 'subscription'
-    } else if (plan === 'Credit Pack' || typeof metadata.credits !== 'undefined') {
+    } else if (plan === 'One-Time Payment' || typeof metadata.credits !== 'undefined') {
       derivedPaymentType = 'one-time'
     } else if (billingType === 'usage_based' || plan === 'Pay Per Image') {
       derivedPaymentType = 'usage-based'
@@ -54,15 +56,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       hasPaid,
       paymentType: derivedPaymentType,
+      paymentMetadata: metadata,
       subscriptionStatus: user.subscriptionStatus,
       paymentDate: user.paymentDate,
-      customerId: user.customerId, // Include customer ID for usage-based tracking
+      customerId: user.customerId,
+      dodoCustomerId: user.dodoCustomerId,
       // Usage statistics
       imagesGenerated: user.imagesGenerated || 0,
       totalUsageCost: user.totalUsageCost || 0,
       lastImageGenerated: user.lastImageGenerated,
-      // Credit tracking for one-time purchases
-      totalCredits: user.totalCredits || 0,
     })
   } catch (error) {
     console.error('Error checking payment status:', error)

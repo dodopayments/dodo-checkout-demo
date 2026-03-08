@@ -245,15 +245,15 @@ type UserUpdateData = {
   paymentDate: Date
   lastPaymentId: string
   paymentMetadata: Record<string, string>
-  totalCredits?: number
   subscriptionId?: string
   subscriptionStatus?: string
   customerId?: string
+  dodoCustomerId?: string
 }
 
 async function updateUserPaymentStatus(
   email: string,
-  paymentType: PaymentType,
+  _paymentType: PaymentType,
   paymentId: string,
   metadata: Record<string, string>,
   subscriptionId?: string,
@@ -277,19 +277,8 @@ async function updateUserPaymentStatus(
 
   if (customerId) {
     updateData.customerId = customerId
-  }
-
-  // Add credits only for explicit Image Bundle purchases
-  // Only add credits if this payment hasn't been processed yet (check by payment ID)
-  if (paymentType === 'one-time' && (metadata?.plan === 'One-Time Payment' || typeof metadata?.credits !== 'undefined')) {
-    const user = await usersCollection.findOne({ email })
-    
-    // Only add credits if this is a new payment (payment ID doesn't match last processed payment)
-    if (user?.lastPaymentId !== paymentId) {
-      const creditsToAdd = Number(metadata?.credits ?? 10)
-      const currentCredits = user?.totalCredits || 0
-      updateData.totalCredits = currentCredits + creditsToAdd
-    }
+    // Store as dodoCustomerId for native credit balance lookups
+    updateData.dodoCustomerId = customerId
   }
 
   const result = await usersCollection.updateOne(

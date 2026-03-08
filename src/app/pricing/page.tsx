@@ -85,10 +85,10 @@ const plans: Plan[] = [
   {
     name: "Credit Pack",
     price: { monthly: "$10", annually: "$8" },
-    description: "100 credits per month with rollover.",
-    capacity: ["100 credits/month", "50% rollover"],
+    description: "25 credits per month with rollover.",
+    capacity: ["25 credits/month", "50% rollover"],
     features: [
-      "100 AI credits per month",
+      "25 AI credits per month",
       "Up to 2048x2048 resolution",
       "Priority generation",
       "Unused credits roll over (50%)",
@@ -243,7 +243,7 @@ const sections: Section[] = [
         plans: {
           "Pay Per Image": "Pay as you go",
           "One-Time Payment": "10 images",
-          "Credit Pack": "100 credits/month",
+          "Credit Pack": "25 credits/month",
           "Unlimited Pro": "Unlimited",
         },
       },

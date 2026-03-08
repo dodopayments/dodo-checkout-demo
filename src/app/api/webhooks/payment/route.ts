@@ -56,7 +56,6 @@ type UserUpdateData = {
   paymentDate?: Date
   lastPaymentId?: string
   paymentMetadata?: Record<string, string>
-  totalCredits?: number
   subscriptionId?: string
   subscriptionStatus?: string
   lastUpdated?: Date
@@ -88,19 +87,11 @@ async function handlePaymentSuccess(data: PaymentWebhookData) {
     paymentMetadata: metadata,
   }
 
-  // If it's an Image Bundle purchase, add credits to the user's balance
-  // Only add credits if this payment hasn't been processed yet (check by payment ID)
-  if (paymentType === 'one-time' && (metadata.plan === 'One-Time Payment' || typeof metadata.credits !== 'undefined')) {
-    const paymentId = data.payment_id || data.id || data.data?.object?.id
-    
-    // Get current user to check if this payment was already processed
-    const user = await usersCollection.findOne({ email: customerEmail })
-    
-    // Only add credits if this is a new payment (payment ID doesn't match last processed payment)
-    if (user?.lastPaymentId !== paymentId) {
-      const creditsToAdd = Number(metadata.credits ?? 10)
-      const currentCredits = user?.totalCredits || 0
-      updateData.totalCredits = currentCredits + creditsToAdd
+  // For one-time payments, store dodoCustomerId so we can fetch native Dodo credit balance
+  if (paymentType === 'one-time') {
+    const customerId = (data as Record<string, unknown>).customer_id as string | undefined
+    if (customerId) {
+      (updateData as Record<string, unknown>).dodoCustomerId = customerId
     }
   }
 

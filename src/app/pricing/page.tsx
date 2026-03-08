@@ -757,13 +757,17 @@ export default function Pricing() {
         body: JSON.stringify({
           product_cart: [
             {
-              product_id: process.env.NEXT_PUBLIC_PRODUCT_ID_CREDIT_BASED,
+              product_id:
+                billingFrequency === "monthly"
+                  ? process.env.NEXT_PUBLIC_PRODUCT_ID_CREDIT_BASED
+                  : (process.env.NEXT_PUBLIC_PRODUCT_ID_CREDIT_BASED_ANNUAL || process.env.NEXT_PUBLIC_PRODUCT_ID_CREDIT_BASED),
               quantity: 1,
             },
           ],
           metadata: {
             plan: "Credit Pack",
             billing_type: "credit_based",
+            billing_frequency: billingFrequency,
           },
           confirm: false,
           show_saved_payment_methods: false,

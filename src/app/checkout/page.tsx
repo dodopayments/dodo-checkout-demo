@@ -71,18 +71,67 @@ function CheckoutPageContent() {
   useEffect(() => {
     const success = searchParams.get("success");
     const errorParam = searchParams.get("error");
+    const status = searchParams.get("status");
+    const subscriptionId = searchParams.get("subscription_id");
+    const paymentId = searchParams.get("payment_id");
+    const returnEmail = searchParams.get("email");
     // Retrieve stored session ID from localStorage
     const sessionId =
       typeof window !== "undefined"
         ? localStorage.getItem("pending_checkout_session_id")
         : null;
 
-    // If payment was successful, verify it with the backend
-    if (success === "true" && sessionId && session?.user?.email) {
-      verifyPayment(session.user.email, sessionId)
+    const userEmail = session?.user?.email || returnEmail;
+
+    // Handle Dodo return params (subscription_id, payment_id, status)
+    if (status && userEmail && (subscriptionId || paymentId || sessionId)) {
+      const body: Record<string, string> = { email: userEmail };
+      if (subscriptionId) body.subscriptionId = subscriptionId;
+      if (paymentId) body.paymentId = paymentId;
+      if (sessionId) body.sessionId = sessionId;
+
+      fetch("/api/verify-payment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      })
+        .then((res) => res.json())
         .then((data) => {
           if (data?.success) {
-            router.push("/dashboard");
+            localStorage.removeItem("pending_checkout_session_id");
+            if (session?.user?.email) {
+              router.push("/dashboard");
+            } else {
+              const guestParams = new URLSearchParams();
+              if (userEmail) guestParams.set("email", userEmail);
+              if (status) guestParams.set("status", status);
+              if (subscriptionId) guestParams.set("subscription_id", subscriptionId);
+              if (paymentId) guestParams.set("payment_id", paymentId);
+              router.push(`/guest-dashboard?${guestParams.toString()}`);
+            }
+          } else {
+            setError(data?.message || "Payment verification failed");
+          }
+        })
+        .catch((err) => {
+          const errorMessage =
+            err instanceof Error ? err.message : "Error verifying payment";
+          setError(errorMessage);
+        });
+      return;
+    }
+
+    // If payment was successful, verify it with the backend
+    if (success === "true" && sessionId && userEmail) {
+      verifyPayment(userEmail, sessionId)
+        .then((data) => {
+          if (data?.success) {
+            localStorage.removeItem("pending_checkout_session_id");
+            if (session?.user?.email) {
+              router.push("/dashboard");
+            } else {
+              router.push(`/guest-dashboard?email=${encodeURIComponent(userEmail)}`);
+            }
           } else {
             setError("Payment verification failed");
           }
@@ -107,8 +156,9 @@ function CheckoutPageContent() {
    * Re-initializes on refresh by checking if checkoutUrl has changed
    */
   useEffect(() => {
-    // Redirect to pricing if no checkout URL is available
-    if (!checkoutUrl && typeof window !== "undefined") {
+    // Redirect to pricing if no checkout URL and no return params
+    const hasReturnParams = searchParams.get("status") || searchParams.get("subscription_id") || searchParams.get("payment_id") || searchParams.get("success");
+    if (!checkoutUrl && !hasReturnParams && typeof window !== "undefined") {
       router.push("/pricing");
       return;
     }

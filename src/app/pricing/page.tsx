@@ -66,7 +66,7 @@ const plans: Plan[] = [
   },
   {
     name: "One-Time Payment",
-    price: { monthly: "$7", annually: "$7" },
+    price: "$7",
     description: "Buy once, use forever. Credits never expire.",
     capacity: ["10 image credits", "Never expires"],
     features: [
@@ -1105,8 +1105,10 @@ export default function Pricing() {
                         : plan.price}
                     </span>
                     <div className="text-xs text-gray-600 dark:text-gray-400">
-                      per image <br />{" "}
-                      {isVariablePrice(plan.price) ? "per month" : ""}
+                      {plan.billingType === "usage-based" && "per image"}
+                      {plan.billingType === "one-time" && "one-time"}
+                      {plan.billingType === "credit-based" && <>per month<br />25 credits</>}
+                      {plan.billingType === "subscription" && "per month"}
                     </div>
                   </div>
                   <div className="mt-6 flex flex-col justify-between">

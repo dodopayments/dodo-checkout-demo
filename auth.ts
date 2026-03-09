@@ -17,6 +17,7 @@ const config: NextAuthConfig = {
         }),
     ],
     adapter: MongoDBAdapter(clientPromise),
+    allowDangerousEmailAccountLinking: true,
     callbacks: {
         async redirect({ url, baseUrl }) {
             if (url.startsWith(baseUrl)) {

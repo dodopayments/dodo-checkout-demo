@@ -25,7 +25,8 @@ export async function POST(request: NextRequest) {
         events: [{
           event_id: body.event_id || `evt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           customer_id: body.customer_id,
-          event_name: body.event_name || 'image.generation',
+          event_name: body.event_name || 'image_generation',
+          timestamp: new Date().toISOString(),
           metadata: body.metadata || {},
         }]
       }),
@@ -50,7 +51,9 @@ export async function POST(request: NextRequest) {
     }
 
     const eventData = await response.json()
-    
+    console.log('Dodo usage event response:', JSON.stringify(eventData))
+    console.log('Sent event:', { customer_id: body.customer_id, event_name: body.event_name || 'image.generation' })
+
     return NextResponse.json({
       success: true,
       event_data: eventData,

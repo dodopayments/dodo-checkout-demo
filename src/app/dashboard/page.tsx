@@ -361,17 +361,27 @@ export default function Dashboard() {
         console.error('Error tracking usage in database:', err)
       }
 
-      // Track usage with Dodo Payments (only for usage-based plans)
-      if (planConfig.name === 'Pay Per Image' && paymentStatus.paymentType === 'usage-based') {
-        const tracked = await trackUsage('image.generation', {
+      // Track usage with Dodo Payments (usage-based, credit-based, and one-time credit plans)
+      if (paymentStatus.paymentType === 'usage-based' || paymentStatus.paymentType === 'one-time' || paymentStatus.paymentType === 'credit-based') {
+        const tracked = await trackUsage('image_generation', {
           prompt: prompt.substring(0, 100),
           resolution: res.label,
           style: 'standard',
           model: 'stable-diffusion',
         })
 
-        if (!tracked) {
-          // Failed to track usage with Dodo Payments, but image was generated
+        if (tracked) {
+          // Refresh credit balance after deduction
+          try {
+            const type = paymentStatus.paymentType === 'one-time' ? 'one-time' : undefined
+            const balanceRes = await fetch(`/api/check-credit-balance${type ? '?type=one-time' : ''}`)
+            if (balanceRes.ok) {
+              const balanceData = await balanceRes.json()
+              setCreditBalance(prev => ({ ...prev, balance: balanceData.balance ?? 0 }))
+            }
+          } catch {
+            // Balance will refresh on next page load
+          }
         }
       }
 

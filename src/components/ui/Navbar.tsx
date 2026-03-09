@@ -8,7 +8,7 @@ import Link from "next/link"
 import React from "react"
 import { DatabaseLogo } from "../../../public/DatabaseLogo"
 import { Button } from "../Button"
-import { useSession } from "next-auth/react"
+import { useSession, signOut } from "next-auth/react"
 
 function useHasPaid() {
   const { data: session } = useSession()
@@ -51,6 +51,7 @@ function useHasPaid() {
 export function Navigation() {
   const scrolled = useScroll(15)
   const [open, setOpen] = React.useState(false)
+  const { data: session } = useSession()
   const { hasPaid } = useHasPaid()
 
   React.useEffect(() => {
@@ -107,11 +108,21 @@ export function Navigation() {
               </a>
             </div>
           </nav>
-          <Button asChild className="hidden h-10 font-semibold md:flex">
-            <Link href={hasPaid ? "/dashboard" : siteConfig.baseLinks.pricing}>
-              {hasPaid ? "Dashboard" : "Start generating"}
-            </Link>
-          </Button>
+          <div className="hidden items-center gap-2 md:flex">
+            {session && (
+              <button
+                onClick={() => signOut({ callbackUrl: "/" })}
+                className="px-2 py-1 text-sm text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-50"
+              >
+                Sign out
+              </button>
+            )}
+            <Button asChild className="h-10 font-semibold">
+              <Link href={hasPaid ? "/dashboard" : siteConfig.baseLinks.pricing}>
+                {hasPaid ? "Dashboard" : "Start generating"}
+              </Link>
+            </Button>
+          </div>
           <div className="flex gap-x-2 md:hidden">
             <Button asChild>
               <Link href={hasPaid ? "/dashboard" : siteConfig.baseLinks.pricing}>
@@ -145,7 +156,7 @@ export function Navigation() {
               <Link href={siteConfig.baseLinks.pricing}>Pricing</Link>
             </li>
             <li onClick={() => setOpen(false)}>
-              <a 
+              <a
                 href={siteConfig.baseLinks.documentation}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -153,6 +164,13 @@ export function Navigation() {
                 Documentation
               </a>
             </li>
+            {session && (
+              <li onClick={() => { setOpen(false); signOut({ callbackUrl: "/" }) }}>
+                <span className="cursor-pointer text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-50">
+                  Sign out
+                </span>
+              </li>
+            )}
           </ul>
         </nav>
       </div>

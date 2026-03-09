@@ -104,14 +104,14 @@ export async function POST(request: NextRequest) {
             metadata,
             subscriptionId,
             subscriptionData.status,
-            subscriptionData.customer_id // Pass customer_id for usage-based subscriptions
+            subscriptionData.customer?.customer_id || subscriptionData.customer_id // Pass customer_id for usage-based subscriptions
           )
 
           return NextResponse.json({
             success: true,
             message: 'Subscription verified and user updated',
             paymentType,
-            customerId: subscriptionData.customer_id, // Return customer_id to frontend
+            customerId: subscriptionData.customer?.customer_id || subscriptionData.customer_id, // Return customer_id to frontend
           })
         } else {
           return NextResponse.json({
@@ -161,7 +161,7 @@ export async function POST(request: NextRequest) {
             metadata,
             discoveredSubscriptionId,
             status,
-            session?.customer_id || session?.customer?.id,
+            session?.customer?.customer_id || session?.customer_id || session?.customer?.id,
           )
 
           return NextResponse.json({ success: true, message: 'Session verified and user updated', paymentType: inferredType })
@@ -186,7 +186,7 @@ export async function POST(request: NextRequest) {
                 pay?.metadata || metadata,
                 discoveredSubscriptionId,
                 pay?.status,
-                pay?.customer_id,
+                pay?.customer?.customer_id || pay?.customer_id,
               )
               return NextResponse.json({ success: true, message: 'Payment verified and user updated', paymentType: inferredType })
             }
@@ -212,7 +212,7 @@ export async function POST(request: NextRequest) {
                 sub?.metadata || metadata,
                 discoveredSubscriptionId,
                 sub?.status,
-                sub?.customer_id,
+                sub?.customer?.customer_id || sub?.customer_id,
               )
               return NextResponse.json({ success: true, message: 'Subscription verified and user updated', paymentType: inferredType })
             }

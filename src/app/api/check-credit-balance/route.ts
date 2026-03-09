@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
     }
 
     const response = await fetch(
-      `https://test.dodopayments.com/customers/${user.dodoCustomerId}/balances/${entitlementId}`,
+      `https://test.dodopayments.com/credit-entitlements/${entitlementId}/balances/${user.dodoCustomerId}`,
       {
         method: 'GET',
         headers: {

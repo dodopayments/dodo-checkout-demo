@@ -10,7 +10,7 @@
  *     const image = await generateImageAPI()
  *     
  *     // Track the usage
- *     await trackUsage('image.generation', {
+ *     await trackUsage('image_generation', {
  *       resolution: '1024x1024',
  *       style: 'realistic'
  *     })
@@ -125,7 +125,7 @@ export function useUsageTracking(customerId?: string): UseUsageTrackingReturn {
  *   async (prompt: string) => {
  *     return await imageAPI.generate(prompt)
  *   },
- *   'image.generation',
+ *   'image_generation',
  *   (prompt) => ({ prompt_length: prompt.length })
  * )
  * ```

@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
 
     const eventData = await response.json()
     console.log('Dodo usage event response:', JSON.stringify(eventData))
-    console.log('Sent event:', { customer_id: body.customer_id, event_name: body.event_name || 'image.generation' })
+    console.log('Sent event:', { customer_id: body.customer_id, event_name: body.event_name || 'image_generation' })
 
     return NextResponse.json({
       success: true,

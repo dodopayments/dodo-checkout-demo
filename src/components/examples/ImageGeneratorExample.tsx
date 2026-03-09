@@ -57,7 +57,7 @@ export function ImageGeneratorExample() {
       const data = await response.json()
       
       // Step 2: Track usage with Dodo Payments
-      const tracked = await trackUsage('image.generation', {
+      const tracked = await trackUsage('image_generation', {
         prompt: prompt.substring(0, 100), // First 100 chars
         resolution: '1024x1024',
         style: 'standard',

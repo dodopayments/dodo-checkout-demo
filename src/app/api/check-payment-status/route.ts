@@ -45,12 +45,12 @@ export async function POST(request: NextRequest) {
 
     if (billingType === 'credit_based' || plan === 'Credit Pack') {
       derivedPaymentType = 'credit-based'
-    } else if (subStatus === 'active' || subStatus === 'trialing' || plan === 'Unlimited Pro' || billingType === 'subscription') {
-      derivedPaymentType = 'subscription'
-    } else if (plan === 'One-Time Payment' || typeof metadata.credits !== 'undefined') {
-      derivedPaymentType = 'one-time'
     } else if (billingType === 'usage_based' || plan === 'Pay Per Image') {
       derivedPaymentType = 'usage-based'
+    } else if (plan === 'One-Time Payment' || typeof metadata.credits !== 'undefined') {
+      derivedPaymentType = 'one-time'
+    } else if (subStatus === 'active' || subStatus === 'trialing' || plan === 'Unlimited Pro' || billingType === 'subscription') {
+      derivedPaymentType = 'subscription'
     }
 
     return NextResponse.json({

@@ -130,9 +130,9 @@ async function handleSubscriptionCreated(data: PaymentWebhookData) {
     paymentMetadata: metadata,
   }
 
-  // For credit-based billing, store the Dodo customer_id for balance lookups
-  const customerId = data.customer?.email ? undefined : (data as Record<string, unknown>).customer_id as string | undefined
-  if (billingType === 'credit_based' && customerId) {
+  // Store the Dodo customer_id for balance lookups (credit-based and usage-based flows)
+  const customerId = (data as Record<string, unknown>).customer_id as string | undefined
+  if (customerId) {
     updateFields.dodoCustomerId = customerId
   }
 

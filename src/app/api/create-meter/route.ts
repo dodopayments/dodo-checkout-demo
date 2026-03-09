@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     // Build payload from request or sensible defaults for image generation metering
     const payload = {
       aggregation: body?.aggregation ?? { type: 'count' },
-      event_name: body?.event_name ?? 'image.generation',
+      event_name: body?.event_name ?? 'image_generation',
       measurement_unit: body?.measurement_unit ?? 'image',
       name: body?.name ?? 'Image Generation Meter',
       description: body?.description ?? null,

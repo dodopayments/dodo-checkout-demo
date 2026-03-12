@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     const hasPaid = user.payment === 'paid'
 
     // Derive payment type dynamically (do not rely on stored paymentType)
-    let derivedPaymentType: 'one-time' | 'subscription' | 'usage-based' | 'credit-based' | undefined
+    let derivedPaymentType: 'one-time' | 'subscription' | 'usage-based' | 'credit-based' | 'prepaid-credits' | undefined
     type PaymentMetadata = {
       plan?: string
       billing_type?: 'usage_based' | 'subscription' | string
@@ -45,12 +45,16 @@ export async function POST(request: NextRequest) {
 
     if (billingType === 'credit_based' || plan === 'Credit Pack') {
       derivedPaymentType = 'credit-based'
-    } else if (billingType === 'usage_based' || plan === 'Pay Per Image') {
+    } else if (plan === 'Starter Credits') {
+      derivedPaymentType = 'prepaid-credits'
+    } else if (billingType === 'usage_based' || plan === 'Pay Per Image' || plan === 'Pay As You Go') {
       derivedPaymentType = 'usage-based'
-    } else if (plan === 'One-Time Payment' || typeof metadata.credits !== 'undefined') {
+    } else if (plan === 'One-Time Payment' || plan === 'Special Downloads') {
       derivedPaymentType = 'one-time'
     } else if (subStatus === 'active' || subStatus === 'trialing' || plan === 'Unlimited Pro' || billingType === 'subscription') {
       derivedPaymentType = 'subscription'
+    } else if (typeof metadata.credits !== 'undefined') {
+      derivedPaymentType = 'prepaid-credits'
     }
 
     return NextResponse.json({

@@ -48,7 +48,7 @@ type PaymentWebhookData = {
   }
 }
 
-type PaymentType = 'one-time' | 'subscription' | 'usage-based'
+type PaymentType = 'one-time' | 'subscription' | 'usage-based' | 'prepaid-credits'
 
 type UserUpdateData = {
   payment: 'paid' | 'unpaid'
@@ -85,14 +85,6 @@ async function handlePaymentSuccess(data: PaymentWebhookData) {
     paymentDate: new Date(),
     lastPaymentId: data.payment_id || data.id || data.data?.object?.id,
     paymentMetadata: metadata,
-  }
-
-  // For one-time payments, store dodoCustomerId so we can fetch native Dodo credit balance
-  if (paymentType === 'one-time') {
-    const customerId = (data as Record<string, unknown>).customer_id as string | undefined
-    if (customerId) {
-      (updateData as Record<string, unknown>).dodoCustomerId = customerId
-    }
   }
 
   // Update user record
@@ -184,11 +176,15 @@ function determinePaymentType(
     return 'usage-based'
   }
   
-  if (metadata.plan === 'Pay Per Image') {
+  if (metadata.plan === 'Pay Per Image' || metadata.plan === 'Pay As You Go') {
     return 'usage-based'
   }
-  
-  if (metadata.plan === 'One-Time Payment') {
+
+  if (metadata.plan === 'Starter Credits') {
+    return 'prepaid-credits'
+  }
+
+  if (metadata.plan === 'One-Time Payment' || metadata.plan === 'Special Downloads') {
     return 'one-time'
   }
 

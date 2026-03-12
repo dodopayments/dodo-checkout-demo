@@ -14,7 +14,7 @@ function GuestDashboardContent() {
   const subscriptionId = searchParams.get('subscription_id')
   const paymentId = searchParams.get('payment_id')
 
-  const planType = subscriptionId ? 'Subscription' : 'One-Time Payment'
+  const planType = subscriptionId ? 'Subscription' : 'Special Downloads'
   const referenceId = subscriptionId || paymentId || 'N/A'
   const isSuccess = status === 'active' || status === 'paid' || status === 'succeeded' || status === 'trialing' || status === 'completed'
 

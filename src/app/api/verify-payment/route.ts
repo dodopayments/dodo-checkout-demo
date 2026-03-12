@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     }
 
     let paymentData = null
-    let paymentType: 'one-time' | 'subscription' | 'usage-based' = 'one-time'
+    let paymentType: 'one-time' | 'subscription' | 'usage-based' | 'prepaid-credits' = 'one-time'
 
     // If payment ID provided, verify the payment
     if (paymentId) {
@@ -237,7 +237,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-type PaymentType = 'one-time' | 'subscription' | 'usage-based'
+type PaymentType = 'one-time' | 'subscription' | 'usage-based' | 'prepaid-credits'
 
 type UserUpdateData = {
   payment: 'paid' | 'unpaid'
@@ -296,8 +296,9 @@ function determinePaymentType(
 ): PaymentType {
   if (metadata.billing_type === 'usage_based') return 'usage-based'
   if (metadata.billing_type === 'subscription') return 'subscription'
-  if (metadata.plan === 'Pay Per Image') return 'usage-based'
-  if (metadata.plan === 'One-Time Payment') return 'one-time'
+  if (metadata.plan === 'Pay Per Image' || metadata.plan === 'Pay As You Go') return 'usage-based'
+  if (metadata.plan === 'Starter Credits') return 'prepaid-credits'
+  if (metadata.plan === 'One-Time Payment' || metadata.plan === 'Special Downloads') return 'one-time'
   if (metadata.billing_type === 'credit_based') return 'subscription'
   if (metadata.plan === 'Unlimited Pro') return 'subscription'
 

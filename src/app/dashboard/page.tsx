@@ -24,7 +24,7 @@ export default function Dashboard() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [images, setImages] = useState<GeneratedImage[]>([])
   const [selectedImage, setSelectedImage] = useState<GeneratedImage | null>(null)
-  const [activeTab, setActiveTab] = useState<'generate' | 'gallery' | 'settings'>('generate')
+  const [activeTab, setActiveTab] = useState<'generate' | 'gallery' | 'downloads' | 'settings'>('generate')
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
   const [paymentStatus, setPaymentStatus] = useState<{
@@ -48,19 +48,32 @@ export default function Dashboard() {
     loading: boolean
   }>({ balance: 0, subscribed: false, loading: false })
 
+
   // Plan-specific configuration
   const getPlanConfig = () => {
     const type = paymentStatus.paymentType
 
-    if (type === 'usage-based') {
+    if (type === 'prepaid-credits') {
       return {
-        name: 'Pay Per Image',
-        displayName: 'Pay Per Image (Usage-Based)',
-        costPerImage: 0.75,
+        name: 'Starter Credits',
+        displayName: 'Starter Credits (Prepaid)',
+        costPerImage: 0,
+        showUsageCost: false,
+        showNativeCredits: true,
+        showCredits: false,
+        isUnlimited: false,
+        billingMessage: `You have ${creditBalance.balance} credit${creditBalance.balance !== 1 ? 's' : ''} remaining. Credits never expire.`,
+        upgradeMessage: creditBalance.balance <= 2 ? 'Running low? Add more credits.' : null,
+      }
+    } else if (type === 'usage-based') {
+      return {
+        name: 'Pay As You Go',
+        displayName: 'Pay As You Go (Usage-Based)',
+        costPerImage: 1,
         showUsageCost: true,
         showCredits: false,
         isUnlimited: false,
-        billingMessage: 'Each image generation costs $0.75. You\'ll be billed at the end of your billing cycle.',
+        billingMessage: 'Each image generation costs $1. You\'ll be billed at the end of your billing cycle.',
         upgradeMessage: 'Need unlimited? Check out our Unlimited Pro plan.'
       }
     } else if (type === 'credit-based') {
@@ -77,15 +90,15 @@ export default function Dashboard() {
       }
     } else if (type === 'one-time') {
       return {
-        name: 'One-Time Payment',
-        displayName: 'One-Time Payment (Image Bundle)',
+        name: 'Special Downloads',
+        displayName: 'Special Downloads (One-Time Purchase)',
         costPerImage: 0,
         showUsageCost: false,
         showCredits: false,
-        showNativeCredits: true,
+        showNativeCredits: false,
         isUnlimited: false,
-        billingMessage: `You have ${creditBalance.balance} credits remaining. Credits never expire.`,
-        upgradeMessage: creditBalance.balance <= 2 ? 'Running low? Purchase another bundle or upgrade.' : null,
+        billingMessage: 'You have purchased premium artwork downloads.',
+        upgradeMessage: 'Want AI generation? Upgrade to a Credit Pack or Pay As You Go.',
       }
     } else if (type === 'subscription') {
       return {
@@ -101,13 +114,13 @@ export default function Dashboard() {
     } else {
       // Default to usage-based
       return {
-        name: 'Pay Per Image',
-        displayName: 'Pay Per Image (Usage-Based)',
-        costPerImage: 0.75,
+        name: 'Pay As You Go',
+        displayName: 'Pay As You Go (Usage-Based)',
+        costPerImage: 1,
         showUsageCost: true,
         showCredits: false,
         isUnlimited: false,
-        billingMessage: 'Each image generation costs $0.75. You\'ll be billed at the end of your billing cycle.',
+        billingMessage: 'Each image generation costs $1. You\'ll be billed at the end of your billing cycle.',
         upgradeMessage: 'Need unlimited? Check out our Unlimited Pro plan.'
       }
     }
@@ -210,6 +223,11 @@ export default function Dashboard() {
           loading: false,
         })
 
+        // Auto-navigate Special Downloads users to their downloads
+        if (data.paymentType === 'one-time') {
+          setActiveTab('downloads')
+        }
+
         // Load usage statistics from database
         setUsageStats({
           imagesGenerated: data.imagesGenerated || 0,
@@ -222,12 +240,12 @@ export default function Dashboard() {
           sessionStorage.setItem('dodo_customer_id', data.customerId)
         }
 
-        // Fetch native Dodo credit balance for credit-based and one-time plan users
-        if (data.dodoCustomerId && (data.paymentType === 'credit-based' || data.paymentType === 'one-time')) {
+        // Fetch native Dodo credit balance for credit-based and prepaid-credits (Starter Credits) plans
+        if (data.dodoCustomerId && (data.paymentType === 'credit-based' || data.paymentType === 'prepaid-credits')) {
           setCreditBalance(prev => ({ ...prev, loading: true }))
-          const balanceType = data.paymentType === 'one-time' ? 'one-time' : 'credit-based'
+          const balanceType = data.paymentType === 'prepaid-credits' ? '?type=starter-credits' : ''
           try {
-            const balanceRes = await fetch(`/api/check-credit-balance?type=${balanceType}`)
+            const balanceRes = await fetch(`/api/check-credit-balance${balanceType}`)
             const balanceData = await balanceRes.json()
             setCreditBalance({ balance: balanceData.balance ?? 0, subscribed: balanceData.subscribed ?? false, loading: false })
           } catch {
@@ -293,6 +311,12 @@ export default function Dashboard() {
     }
     setFormError(null)
 
+    // Block if credits exhausted (Starter Credits or Credit Pack)
+    if ((paymentStatus.paymentType === 'prepaid-credits' || paymentStatus.paymentType === 'credit-based') && creditBalance.balance <= 0 && !creditBalance.loading) {
+      setFormError('No credits remaining. Please add more credits to continue.')
+      return
+    }
+
     setIsGenerating(true)
 
     try {
@@ -302,10 +326,10 @@ export default function Dashboard() {
         if (type === 'subscription') {
           return { width: 4096, height: 4096, label: '4096x4096' }
         }
-        if (type === 'one-time') {
+        if (type === 'credit-based') {
           return { width: 2048, height: 2048, label: '2048x2048' }
         }
-        // Default and usage-based
+        // Default, usage-based, prepaid-credits
         return { width: 1024, height: 1024, label: '1024x1024' }
       }
       const res = getPlanResolution()
@@ -361,8 +385,8 @@ export default function Dashboard() {
         console.error('Error tracking usage in database:', err)
       }
 
-      // Track usage with Dodo Payments (usage-based, credit-based, and one-time credit plans)
-      if (paymentStatus.paymentType === 'usage-based' || paymentStatus.paymentType === 'one-time' || paymentStatus.paymentType === 'credit-based') {
+      // Track usage with Dodo Payments (usage-based, credit-based, prepaid-credits plans)
+      if (paymentStatus.paymentType === 'usage-based' || paymentStatus.paymentType === 'credit-based' || paymentStatus.paymentType === 'prepaid-credits') {
         const tracked = await trackUsage('image_generation', {
           prompt: prompt.substring(0, 100),
           resolution: res.label,
@@ -373,8 +397,8 @@ export default function Dashboard() {
         if (tracked) {
           // Refresh credit balance after deduction
           try {
-            const type = paymentStatus.paymentType === 'one-time' ? 'one-time' : undefined
-            const balanceRes = await fetch(`/api/check-credit-balance${type ? '?type=one-time' : ''}`)
+            const balanceType = paymentStatus.paymentType === 'prepaid-credits' ? '?type=starter-credits' : ''
+            const balanceRes = await fetch(`/api/check-credit-balance${balanceType}`)
             if (balanceRes.ok) {
               const balanceData = await balanceRes.json()
               setCreditBalance(prev => ({ ...prev, balance: balanceData.balance ?? 0 }))
@@ -567,8 +591,8 @@ export default function Dashboard() {
             </p>
           </div>
 
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+          {/* Stats Cards — hidden for Special Downloads users */}
+          {paymentStatus.paymentType !== 'one-time' && <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-8">
             <div className="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg border border-gray-200 dark:border-gray-700">
               <div className="p-5">
                 <div className="flex items-center">
@@ -606,7 +630,7 @@ export default function Dashboard() {
                   <div className="ml-5 w-0 flex-1">
                     <dl>
                       <dt className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                        {planConfig.isUnlimited ? 'Plan Status' : (planConfig as {showNativeCredits?: boolean}).showNativeCredits ? 'AI Credits' : 'Usage Cost'}
+                        {planConfig.isUnlimited ? 'Plan Status' : (planConfig as {showNativeCredits?: boolean}).showNativeCredits ? 'Credits Left' : 'Usage Cost'}
                       </dt>
                       <dd className="text-2xl font-bold text-gray-900 dark:text-white">
                         {planConfig.isUnlimited ? (
@@ -670,29 +694,44 @@ export default function Dashboard() {
                 </div>
               </div>
             </div>
-          </div>
+          </div>}
 
           {/* Tabs */}
           <div className="border-b border-gray-200 dark:border-gray-700 mb-6">
             <nav className="-mb-px flex space-x-8">
-              <button
-                onClick={() => setActiveTab('generate')}
-                className={`${activeTab === 'generate'
-                  ? 'border-lime-500 text-lime-600 dark:text-lime-400'
-                  : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
-                  } whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium transition-colors`}
-              >
-                Generate
-              </button>
-              <button
-                onClick={() => setActiveTab('gallery')}
-                className={`${activeTab === 'gallery'
-                  ? 'border-lime-500 text-lime-600 dark:text-lime-400'
-                  : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
-                  } whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium transition-colors`}
-              >
-                Gallery ({images.length})
-              </button>
+              {paymentStatus.paymentType !== 'one-time' && (
+                <button
+                  onClick={() => setActiveTab('generate')}
+                  className={`${activeTab === 'generate'
+                    ? 'border-lime-500 text-lime-600 dark:text-lime-400'
+                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                    } whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium transition-colors`}
+                >
+                  Generate
+                </button>
+              )}
+              {paymentStatus.paymentType !== 'one-time' && (
+                <button
+                  onClick={() => setActiveTab('gallery')}
+                  className={`${activeTab === 'gallery'
+                    ? 'border-lime-500 text-lime-600 dark:text-lime-400'
+                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                    } whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium transition-colors`}
+                >
+                  Gallery ({images.length})
+                </button>
+              )}
+              {paymentStatus.paymentType === 'one-time' && (
+                <button
+                  onClick={() => setActiveTab('downloads')}
+                  className={`${activeTab === 'downloads'
+                    ? 'border-lime-500 text-lime-600 dark:text-lime-400'
+                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                    } whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium transition-colors`}
+                >
+                  Downloads (12)
+                </button>
+              )}
               <button
                 onClick={() => setActiveTab('settings')}
                 className={`${activeTab === 'settings'
@@ -721,7 +760,7 @@ export default function Dashboard() {
                       <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                     </svg>
                   </div>
-                  <div className="ml-3">
+                  <div className="ml-3 flex-1">
                     <h3 className={`text-sm font-medium ${planConfig.isUnlimited ? 'text-lime-800 dark:text-lime-400' : 'text-blue-800 dark:text-blue-400'}`}>
                       {planConfig.name}
                     </h3>
@@ -735,6 +774,13 @@ export default function Dashboard() {
                         )}</>
                       )}
                     </p>
+                    {paymentStatus.paymentType === 'prepaid-credits' && creditBalance.balance === 0 && !creditBalance.loading && (
+                      <div className="mt-3">
+                        <a href="/pricing" className="text-xs font-medium underline text-blue-700 dark:text-blue-300">
+                          Out of credits? Buy more from the pricing page.
+                        </a>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -766,11 +812,14 @@ export default function Dashboard() {
 
                   <div className="flex items-center justify-between">
                     <div className="text-sm text-gray-500 dark:text-gray-400">
-                      {isTracking && planConfig.name === 'Pay Per Image' && <span className="text-yellow-600 dark:text-yellow-400">⏳ Tracking usage...</span>}
+                      {isTracking && <span className="text-yellow-600 dark:text-yellow-400">Tracking usage...</span>}
+                      {(paymentStatus.paymentType === 'prepaid-credits' || paymentStatus.paymentType === 'credit-based') && creditBalance.balance === 0 && !creditBalance.loading && (
+                        <span className="text-red-600 dark:text-red-400 text-xs">No credits remaining</span>
+                      )}
                     </div>
                     <Button
                       onClick={generateImage}
-                      disabled={isGenerating || (isTracking && planConfig.name === 'Pay Per Image') || !prompt.trim()}
+                      disabled={isGenerating || isTracking || !prompt.trim()}
                       className="px-6 py-3"
                     >
                       {isGenerating ? (
@@ -981,6 +1030,64 @@ export default function Dashboard() {
                   ))}
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Downloads Tab - Special Downloads plan only */}
+          {activeTab === 'downloads' && (
+            <div>
+              <div className="mb-6">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Your Art Pack</h2>
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                  12 premium artworks included with your purchase. Click download to save.
+                </p>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {[
+                  { seed: 10, title: 'Impressionist Meadow' },
+                  { seed: 20, title: 'Baroque Portrait' },
+                  { seed: 30, title: 'Abstract Waves' },
+                  { seed: 40, title: 'Renaissance Garden' },
+                  { seed: 50, title: 'Cubist Cityscape' },
+                  { seed: 60, title: 'Surrealist Dream' },
+                  { seed: 70, title: 'Expressionist Storm' },
+                  { seed: 80, title: 'Pointillist Lake' },
+                  { seed: 90, title: 'Gothic Archway' },
+                  { seed: 100, title: 'Romantic Sunset' },
+                  { seed: 200, title: 'Minimalist Forest' },
+                  { seed: 300, title: 'Realist Harbor' },
+                ].map(({ seed, title }) => (
+                  <div
+                    key={seed}
+                    className="group relative bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-lg transition-shadow"
+                  >
+                    <div className="relative aspect-square overflow-hidden bg-gray-100 dark:bg-gray-900">
+                      <Image
+                        src={`https://picsum.photos/seed/${seed}/600/600`}
+                        alt={title}
+                        fill
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 300px"
+                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    </div>
+                    <div className="p-4">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white mb-3">{title}</p>
+                      <a
+                        href={`https://picsum.photos/seed/${seed}/1200/900`}
+                        download={`${title.replace(/ /g, '_')}.jpg`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        Download
+                      </a>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 

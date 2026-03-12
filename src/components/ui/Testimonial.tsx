@@ -8,7 +8,7 @@ export default function Testimonial() {
         <blockquote className="mx-auto max-w-2xl text-center text-xl font-semibold leading-8 text-gray-900 sm:text-2xl sm:leading-9 dark:text-gray-50">
           <p>
             <Balancer>
-              “Dodo AI Studio transformed our creative workflow. We generate
+              “Atlas Studio transformed our creative workflow. We generate
               campaign-ready visuals in minutes—quality that rivals our studio
               shoots at a fraction of the cost.”
             </Balancer>

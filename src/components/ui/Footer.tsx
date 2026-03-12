@@ -35,7 +35,7 @@ export default function Footer() {
             <DatabaseLogo className="w-32 sm:w-40" />
             <p className="text-sm leading-6 text-gray-600 dark:text-gray-400">
               A demo showcasing Dodo Payments&#39; flexible billing capabilities.
-              Experience usage-based, one-time, and subscription payments.
+              Experience usage-based, credit-based, subscription, and one-time payments.
             </p>
             <div className="flex space-x-6">
               <ThemeSwitch />

@@ -13,8 +13,8 @@ export async function GET(request: NextRequest) {
 
     // Pick entitlement ID based on type query param
     const type = request.nextUrl.searchParams.get('type')
-    const entitlementId = type === 'one-time'
-      ? process.env.CREDIT_ENTITLEMENT_ID_ONE_TIME
+    const entitlementId = type === 'starter-credits'
+      ? process.env.CREDIT_ENTITLEMENT_ID_STARTER_CREDITS
       : process.env.CREDIT_ENTITLEMENT_ID
 
     if (!bearerToken || !entitlementId) {

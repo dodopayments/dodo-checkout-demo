@@ -41,57 +41,40 @@ interface Plan {
   isRecommended: boolean;
   buttonText: string;
   buttonLink: string;
-  billingType: 'usage-based' | 'one-time' | 'credit-based' | 'subscription';
+  billingType: 'prepaid-credits' | 'credit-based' | 'subscription' | 'special-download';
 }
 
 const plans: Plan[] = [
   {
-    name: "Pay Per Image",
-    price: "$0.75",
+    name: "Starter Credits",
+    price: "$10",
     description:
-      "Pay only for what you generate. No commitment.",
-    capacity: ["No monthly commitment", "Pay as you go"],
+      "10 prepaid credits, never expire. Top up anytime.",
+    capacity: ["10 credits upfront", "Never expire"],
     features: [
-      "$0.50 - $1.00 per image",
+      "10 AI image credits",
       "Standard generation speed",
       "Basic art styles",
       "1024x1024 resolution",
-      "Commercial license included",
+      "Credits never expire",
+      "Add more anytime",
     ],
     isStarter: true,
     isRecommended: false,
-    buttonText: "Start generating",
+    buttonText: "Buy credits",
     buttonLink: "#",
-    billingType: "usage-based",
-  },
-  {
-    name: "One-Time Payment",
-    price: "$7",
-    description: "Buy once, use forever. Credits never expire.",
-    capacity: ["10 image credits", "Never expires"],
-    features: [
-      "10 high-quality images",
-      "Premium art styles",
-      "Up to 2048x2048 resolution",
-      "Priority generation",
-      "Advanced editing tools",
-    ],
-    isStarter: false,
-    isRecommended: false,
-    buttonText: "Buy bundle",
-    buttonLink: "#",
-    billingType: "one-time",
+    billingType: "prepaid-credits",
   },
   {
     name: "Credit Pack",
     price: { monthly: "$10", annually: "$8" },
-    description: "25 credits per month with rollover.",
-    capacity: ["25 credits/month", "50% rollover"],
+    description: "25 credits per month. Save 20% with annual billing.",
+    capacity: ["25 credits/month", "Rollover included"],
     features: [
       "25 AI credits per month",
       "Up to 2048x2048 resolution",
       "Priority generation",
-      "Unused credits roll over (50%)",
+      "50% credit rollover",
       "Low balance alerts",
       "Full credit ledger history",
     ],
@@ -106,7 +89,7 @@ const plans: Plan[] = [
     price: { monthly: "$20", annually: "$16" },
     description:
       "Unlimited generation for professionals.",
-    capacity: ["Unlimited image generation", "Commercial usage rights"],
+    capacity: ["Unlimited images", "Commercial rights"],
     features: [
       "Unlimited high-quality images",
       "All premium art styles",
@@ -117,9 +100,28 @@ const plans: Plan[] = [
     ],
     isStarter: false,
     isRecommended: true,
-    buttonText: "Start free trial",
+    buttonText: "Get started",
     buttonLink: "#",
     billingType: "subscription",
+  },
+  {
+    name: "Special Downloads",
+    price: "$12",
+    description: "Curated art pack of 12 premium artworks. One-time purchase.",
+    capacity: ["12 premium artworks", "Instant download"],
+    features: [
+      "12 curated artworks",
+      "4096x4096 resolution",
+      "Famous painter styles",
+      "Commercial use allowed",
+      "No credits required",
+      "Digital ownership",
+    ],
+    isStarter: false,
+    isRecommended: false,
+    buttonText: "Get Art Pack",
+    buttonLink: "#",
+    billingType: "special-download",
   },
 ];
 
@@ -142,40 +144,40 @@ const sections: Section[] = [
         name: "Image Resolution",
         tooltip: "Maximum resolution available for your generated images.",
         plans: {
-          "Pay Per Image": "1024x1024",
-          "One-Time Payment": "2048x2048",
+          "Starter Credits": "1024x1024",
           "Credit Pack": "2048x2048",
           "Unlimited Pro": "4096x4096",
+          "Special Downloads": "4096x4096",
         },
       },
       {
         name: "Art Styles",
         tooltip: "Number and variety of artistic styles available.",
         plans: {
-          "Pay Per Image": "Basic (10 styles)",
-          "One-Time Payment": "Premium (50+ styles)",
+          "Starter Credits": "Basic (10 styles)",
           "Credit Pack": "Premium (50+ styles)",
           "Unlimited Pro": "All styles (100+)",
+          "Special Downloads": "Famous painters (50+)",
         },
       },
       {
         name: "Generation Speed",
         tooltip: "How quickly your images are generated.",
         plans: {
-          "Pay Per Image": "Standard",
-          "One-Time Payment": "Priority",
+          "Starter Credits": "Standard",
           "Credit Pack": "Priority",
           "Unlimited Pro": "Fastest",
+          "Special Downloads": "Instant download",
         },
       },
       {
         name: "Commercial License",
         tooltip: "Use generated images for commercial purposes.",
         plans: {
-          "Pay Per Image": true,
-          "One-Time Payment": true,
+          "Starter Credits": true,
           "Credit Pack": true,
           "Unlimited Pro": true,
+          "Special Downloads": true,
         },
       },
     ],
@@ -187,7 +189,6 @@ const sections: Section[] = [
         name: "Image Editing Tools",
         tooltip: "Advanced editing capabilities for your generated art.",
         plans: {
-          "One-Time Payment": true,
           "Credit Pack": true,
           "Unlimited Pro": true,
         },
@@ -201,7 +202,6 @@ const sections: Section[] = [
         name: "Batch Generation",
         tooltip: "Generate multiple images at once.",
         plans: {
-          "One-Time Payment": "Up to 5",
           "Credit Pack": "Up to 5",
           "Unlimited Pro": "Unlimited",
         },
@@ -220,7 +220,7 @@ const sections: Section[] = [
         name: "Credit Rollover",
         tooltip: "Unused credits carried over to the next billing cycle.",
         plans: {
-          "Credit Pack": "50% rollover",
+          "Credit Pack": "Monthly: 50% rollover",
         },
       },
       {
@@ -241,20 +241,20 @@ const sections: Section[] = [
         name: "Monthly Generations",
         tooltip: "Number of images you can generate per month.",
         plans: {
-          "Pay Per Image": "Pay as you go",
-          "One-Time Payment": "10 images",
-          "Credit Pack": "25 credits/month",
+          "Starter Credits": "Pay as you go",
+          "Credit Pack": "25/month (monthly) or 10 (one-time)",
           "Unlimited Pro": "Unlimited",
+          "Special Downloads": "Unlimited downloads",
         },
       },
       {
         name: "Image History",
         tooltip: "How long your generated images are stored.",
         plans: {
-          "Pay Per Image": "30 days",
-          "One-Time Payment": "1 year",
+          "Starter Credits": "30 days",
           "Credit Pack": "1 year",
           "Unlimited Pro": "Forever",
+          "Special Downloads": "Forever",
         },
       },
     ],
@@ -265,19 +265,19 @@ const sections: Section[] = [
       {
         name: "Community Support",
         plans: {
-          "Pay Per Image": "Discord community",
-          "One-Time Payment": "Priority Discord",
+          "Starter Credits": "Discord community",
           "Credit Pack": "Priority Discord",
           "Unlimited Pro": "Dedicated support",
+          "Special Downloads": "Email support",
         },
       },
       {
         name: "Response Time",
         plans: {
-          "Pay Per Image": "48 hours",
-          "One-Time Payment": "24 hours",
+          "Starter Credits": "48 hours",
           "Credit Pack": "24 hours",
           "Unlimited Pro": "4 hours",
+          "Special Downloads": "24 hours",
         },
       },
     ],
@@ -399,42 +399,39 @@ export default function Pricing() {
     }
   }, [router, session]);
 
-  const handleBuyCredits = async (planName: string) => {
-    if (planName !== "One-Time Payment") return;
+  const handleSpecialDownload = async (planName: string) => {
+    if (planName !== "Special Downloads") return;
 
-    // Check if user is logged in
     if (!session?.user?.email) {
       setPendingPlan(planName);
-      setPendingCheckoutCallback(() => proceedWithBuyCredits);
+      setPendingCheckoutCallback(() => proceedWithSpecialDownload);
       setShowAuthModal(true);
       return;
     }
 
-    await proceedWithBuyCredits();
+    await proceedWithSpecialDownload();
   };
 
-  const proceedWithBuyCredits = async () => {
-    const planName = "One-Time Payment";
+  const proceedWithSpecialDownload = async () => {
+    const planName = "Special Downloads";
     setIsLoading(planName);
 
     try {
-      // Create unified checkout session
       const response = await fetch("/api/create-checkout-session", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          // Let Checkout collect customer & billing details
           product_cart: [
             {
-              product_id: process.env.NEXT_PUBLIC_PRODUCT_ID_IMAGE_BUNDLE,
+              product_id: process.env.NEXT_PUBLIC_PRODUCT_ID_SPECIAL_DOWNLOAD,
               quantity: 1,
             },
           ],
           metadata: {
-            plan: "One-Time Payment",
-            credits: "10",
+            plan: "Special Downloads",
+            type: "premium_artwork",
           },
           confirm: false,
           show_saved_payment_methods: false,
@@ -459,40 +456,32 @@ export default function Pricing() {
       const data = await response.json();
 
       if (data.success && data.checkout_url) {
-        // Store session for verification after redirect if needed
         if (data.session_id) {
           localStorage.setItem("pending_checkout_session_id", data.session_id);
         }
         const url = data.checkout_url;
 
-        // Handle checkout based on user preference: inline, overlay, or redirect
         if (useInlineCheckout) {
-          // INLINE CHECKOUT: Store checkout URL and navigate to dedicated checkout page
-          // The checkout will be embedded inline on /checkout page
           localStorage.setItem("pending_checkout_url", url);
           router.push(`/checkout?checkout_url=${encodeURIComponent(url)}`);
         } else if (useOverlayCheckout) {
-          DodoPayments.Checkout.open({
-            checkoutUrl: url,
-          });
+          DodoPayments.Checkout.open({ checkoutUrl: url });
         } else {
-          // Traditional redirect checkout
           window.location.href = url;
         }
       } else {
-        console.error("Checkout session creation failed:", data);
         const msg =
           data.message ||
           data.details?.message ||
           data.error ||
           "Failed to create checkout session";
-        setErrorMessage(`Checkout Error: ${msg}`);
+        setErrorMessage(`Special Download Error: ${msg}`);
         setShowError(true);
         setTimeout(() => setShowError(false), 5000);
         setIsLoading(null);
       }
     } catch (error) {
-      console.error("Error creating checkout session:", error);
+      console.error("Error creating special download checkout:", error);
       setErrorMessage("An error occurred. Please try again.");
       setShowError(true);
       setTimeout(() => setShowError(false), 5000);
@@ -607,52 +596,27 @@ export default function Pricing() {
     }
   };
 
-  const proceedWithUsageBased = async () => {
-    const planName = "Pay Per Image";
+  const proceedWithStarterCredits = async () => {
+    const planName = "Starter Credits";
     setIsLoading(planName);
 
     try {
-      // Best-effort: ensure a meter exists for usage tracking
-      // If it already exists, the backend will return an error which we ignore
-      try {
-        await fetch("/api/create-meter", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            aggregation: { type: "count" },
-            event_name: "image_generation",
-            measurement_unit: "image",
-            name: "Image Generation Meter",
-            description: "Counts images generated by users",
-            filter: null,
-          }),
-        });
-      } catch {
-        // Non-blocking
-      }
-
-      // Create unified checkout session for usage-based product
       const response = await fetch("/api/create-checkout-session", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          // Let Checkout collect customer & billing details
           product_cart: [
             {
-              product_id: process.env.NEXT_PUBLIC_PRODUCT_ID_USAGE_BASED,
+              product_id: process.env.NEXT_PUBLIC_PRODUCT_ID_IMAGE_BUNDLE,
               quantity: 1,
             },
           ],
           metadata: {
-            plan: "Pay Per Image",
-            billing_type: "usage_based",
+            plan: "Starter Credits",
+            credits: "10",
           },
           confirm: false,
           show_saved_payment_methods: false,
-          // For inline checkout: set return_url to redirect to dedicated checkout page
-          // For overlay/redirect: leave undefined to use default behavior
           return_url: useInlineCheckout
             ? `${typeof window !== "undefined" ? window.location.origin : ""}/checkout`
             : undefined,
@@ -679,39 +643,23 @@ export default function Pricing() {
         }
         const url = data.checkout_url;
 
-        // Handle checkout based on user preference: inline, overlay, or redirect
         if (useInlineCheckout) {
-          // INLINE CHECKOUT: Store checkout URL and navigate to dedicated checkout page
-          // The checkout will be embedded inline on /checkout page
           localStorage.setItem("pending_checkout_url", url);
           router.push(`/checkout?checkout_url=${encodeURIComponent(url)}`);
         } else if (useOverlayCheckout) {
-          // OVERLAY CHECKOUT: Open checkout in a modal overlay on current page
-          DodoPayments.Checkout.open({
-            checkoutUrl: url,
-          });
+          DodoPayments.Checkout.open({ checkoutUrl: url });
         } else {
-          // REDIRECT CHECKOUT: Navigate away to hosted checkout page
           window.location.href = url;
         }
       } else {
-        console.error("Usage-based checkout session failed:", data);
-
-        // Extract error message with better debugging
-        let errorMessage = "Failed to create usage-based checkout session";
-        if (data.message) errorMessage = data.message;
-        else if (data.details?.message) errorMessage = data.details.message;
-        else if (data.error) errorMessage = data.error;
-        else if (data.details?.code)
-          errorMessage = `Error code: ${data.details.code}`;
-
-        setErrorMessage(`Usage-Based Billing Error: ${errorMessage}`);
+        const msg = data.message || data.details?.message || data.error || "Failed to create checkout session";
+        setErrorMessage(`Starter Credits Error: ${msg}`);
         setShowError(true);
         setTimeout(() => setShowError(false), 5000);
         setIsLoading(null);
       }
     } catch (error) {
-      console.error("Error creating usage-based checkout session:", error);
+      console.error("Error creating starter credits checkout:", error);
       setErrorMessage("An error occurred. Please try again.");
       setShowError(true);
       setTimeout(() => setShowError(false), 5000);
@@ -719,18 +667,17 @@ export default function Pricing() {
     }
   };
 
-  const handleUsageBased = async (planName: string) => {
-    if (planName !== "Pay Per Image") return;
+  const handleStarterCredits = async (planName: string) => {
+    if (planName !== "Starter Credits") return;
 
-    // Check if user is logged in
     if (!session?.user?.email) {
       setPendingPlan(planName);
-      setPendingCheckoutCallback(() => proceedWithUsageBased);
+      setPendingCheckoutCallback(() => proceedWithStarterCredits);
       setShowAuthModal(true);
       return;
     }
 
-    await proceedWithUsageBased();
+    await proceedWithStarterCredits();
   };
 
   const handleCreditBased = async (planName: string) => {
@@ -970,10 +917,7 @@ export default function Pricing() {
                 </svg>
               </div>
               <p className="text-sm text-lime-800 dark:text-lime-200">
-                Dodo Payments Demo: Four billing models -{" "}
-                <strong>Usage-Based</strong>, <strong>One-Time Payment</strong>,{" "}
-                <strong>Credit-Based</strong>, and <strong>Subscription</strong>. Try overlay and redirect
-                checkout.
+                Dodo Payments Demo: <strong>Starter Credits</strong> (prepaid), <strong>Credit Pack</strong> (subscription), <strong>Unlimited Pro</strong> (unlimited), and <strong>Special Downloads</strong> (one-time art pack).
               </p>
             </div>
           </div>
@@ -1072,8 +1016,7 @@ export default function Pricing() {
                       </div>
                       <div className="relative flex justify-center">
                         <span className="bg-white px-3 text-xs font-medium text-lime-600 dark:bg-gray-950 dark:text-lime-400">
-                          {plan.billingType === "usage-based" && "Usage-Based"}
-                          {plan.billingType === "one-time" && "One-Time Payment"}
+                          {plan.billingType === "prepaid-credits" && "Prepaid Credits"}
                           {plan.billingType === "credit-based" && (
                             <>
                               Credit-Based{" "}
@@ -1083,6 +1026,7 @@ export default function Pricing() {
                             </>
                           )}
                           {plan.billingType === "subscription" && "Subscription"}
+                          {plan.billingType === "special-download" && "One-Time"}
                         </span>
                       </div>
                     </div>
@@ -1105,10 +1049,10 @@ export default function Pricing() {
                         : plan.price}
                     </span>
                     <div className="text-xs text-gray-600 dark:text-gray-400">
-                      {plan.billingType === "usage-based" && "per image"}
-                      {plan.billingType === "one-time" && "one-time"}
-                      {plan.billingType === "credit-based" && <>per month<br />25 credits</>}
+                      {plan.billingType === "prepaid-credits" && <>for 10<br />credits</>}
+                      {plan.billingType === "credit-based" && <>per month<br /><span className="text-xs">{billingFrequency === "annually" ? "billed $96/yr" : "billed monthly"}</span></>}
                       {plan.billingType === "subscription" && "per month"}
+                      {plan.billingType === "special-download" && <>for 12<br />artworks</>}
                     </div>
                   </div>
                   <div className="mt-6 flex flex-col justify-between">
@@ -1116,20 +1060,11 @@ export default function Pricing() {
                       {plan.description}
                     </p>
                     <div className="mt-6">
-                      {plan.billingType === "usage-based" ? (
+                      {plan.billingType === "prepaid-credits" ? (
                         <Button
                           variant="secondary"
                           className="group w-full"
-                          onClick={() => handleUsageBased(plan.name)}
-                          disabled={isLoading === plan.name}
-                        >
-                          {isLoading === plan.name ? "Processing..." : plan.buttonText}
-                          {isLoading !== plan.name && <ArrowAnimated />}
-                        </Button>
-                      ) : plan.billingType === "one-time" ? (
-                        <Button
-                          className="group w-full"
-                          onClick={() => handleBuyCredits(plan.name)}
+                          onClick={() => handleStarterCredits(plan.name)}
                           disabled={isLoading === plan.name}
                         >
                           {isLoading === plan.name ? "Processing..." : plan.buttonText}
@@ -1148,6 +1083,16 @@ export default function Pricing() {
                         <Button
                           className="group w-full"
                           onClick={() => handleSubscribe(plan.name)}
+                          disabled={isLoading === plan.name}
+                        >
+                          {isLoading === plan.name ? "Processing..." : plan.buttonText}
+                          {isLoading !== plan.name && <ArrowAnimated />}
+                        </Button>
+                      ) : plan.billingType === "special-download" ? (
+                        <Button
+                          variant="secondary"
+                          className="group w-full"
+                          onClick={() => handleSpecialDownload(plan.name)}
                           disabled={isLoading === plan.name}
                         >
                           {isLoading === plan.name ? "Processing..." : plan.buttonText}
@@ -1423,22 +1368,12 @@ export default function Pricing() {
                     </th>
                     {plans.map((plan) => (
                       <td key={plan.name} className="px-6 pt-6 lg:px-8">
-                        {plan.billingType === "usage-based" ? (
+                        {plan.billingType === "prepaid-credits" ? (
                           <Button
                             variant="light"
-                            onClick={() => handleUsageBased(plan.name)}
+                            onClick={() => handleStarterCredits(plan.name)}
                             disabled={isLoading === plan.name}
                             className="group bg-transparent px-0 text-base hover:bg-transparent dark:bg-transparent hover:dark:bg-transparent"
-                          >
-                            {isLoading === plan.name ? "Processing..." : plan.buttonText}
-                            {isLoading !== plan.name && <ArrowAnimated />}
-                          </Button>
-                        ) : plan.billingType === "one-time" ? (
-                          <Button
-                            variant="light"
-                            onClick={() => handleBuyCredits(plan.name)}
-                            disabled={isLoading === plan.name}
-                            className="group bg-transparent px-0 text-base text-lime-600 hover:bg-transparent dark:bg-transparent dark:text-lime-400 hover:dark:bg-transparent"
                           >
                             {isLoading === plan.name ? "Processing..." : plan.buttonText}
                             {isLoading !== plan.name && <ArrowAnimated />}
@@ -1459,6 +1394,16 @@ export default function Pricing() {
                             onClick={() => handleSubscribe(plan.name)}
                             disabled={isLoading === plan.name}
                             className="group bg-transparent px-0 text-base text-lime-600 hover:bg-transparent dark:bg-transparent dark:text-lime-400 hover:dark:bg-transparent"
+                          >
+                            {isLoading === plan.name ? "Processing..." : plan.buttonText}
+                            {isLoading !== plan.name && <ArrowAnimated />}
+                          </Button>
+                        ) : plan.billingType === "special-download" ? (
+                          <Button
+                            variant="light"
+                            onClick={() => handleSpecialDownload(plan.name)}
+                            disabled={isLoading === plan.name}
+                            className="group bg-transparent px-0 text-base hover:bg-transparent dark:bg-transparent hover:dark:bg-transparent"
                           >
                             {isLoading === plan.name ? "Processing..." : plan.buttonText}
                             {isLoading !== plan.name && <ArrowAnimated />}

@@ -10,7 +10,7 @@ const faqs = [
   {
     question: "How is pricing calculated for image generation?",
     answer:
-      "You can pay per image ($0.50–$1), buy a one-time credit pack, or subscribe to Unlimited Pro ($20/mo).",
+      "You can pay per image ($1 each), get a Credit Pack (monthly or bundle), subscribe to Unlimited Pro ($20/mo), or buy Special Downloads (premium artwork).",
   },
   {
     question: "Can I use generated images commercially?",
@@ -20,7 +20,7 @@ const faqs = [
   {
     question: "What image resolutions are supported?",
     answer:
-      "From 1024×1024 on Pay Per Image up to 4096×4096 on Unlimited Pro.",
+      "From 1024×1024 on Pay As You Go up to 4096×4096 on Unlimited Pro and Special Downloads.",
   },
   {
     question: "Do you offer an API?",

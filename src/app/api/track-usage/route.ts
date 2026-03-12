@@ -4,7 +4,7 @@ import type { Collection, UpdateFilter } from 'mongodb'
 
 type UserDoc = {
   email: string
-  paymentType?: 'usage-based' | 'one-time' | 'subscription'
+  paymentType?: 'usage-based' | 'one-time' | 'subscription' | 'credit-based' | 'prepaid-credits'
   paymentMetadata?: {
     plan?: string
     billing_frequency?: string
@@ -49,31 +49,24 @@ export async function POST(request: NextRequest) {
     const plan = metadata.plan
     const billingType = metadata.billing_type
     const billingFrequency = metadata.billing_frequency
-    
-    // Determine if plan is usage-based
-    // Don't count totalUsageCost for subscription plans like "Unlimited Pro"
-    // If plan is "Unlimited Pro" or has billing_frequency (monthly/annual), it's a subscription, not usage-based
+
     const isSubscriptionPlan = plan === 'Unlimited Pro' || billingFrequency === 'monthly' || billingFrequency === 'annual'
-    const isUsageBased = 
+    const isUsageBased =
       !isSubscriptionPlan && (
-        billingType === 'usage_based' || 
+        billingType === 'usage_based' ||
         plan === 'Pay Per Image' ||
+        plan === 'Pay As You Go' ||
         (user.paymentType === 'usage-based' && !isSubscriptionPlan)
       )
-    
+
     let cost = 0
     if (isUsageBased) {
-      cost = 0.75 // Pay per image
+      cost = 1 // Pay As You Go
     }
 
-    // We no longer store per-image usageHistory to avoid duplication
-
-    // Initialize usage stats if they don't exist
     const currentImagesGenerated = user.imagesGenerated || 0
     const currentTotalCost = user.totalUsageCost || 0
 
-    // Update user with new usage data
-    // Only update totalUsageCost for usage-based plans
     const updateDoc: UpdateFilter<UserDoc> = {
       $set: {
         imagesGenerated: currentImagesGenerated + 1,
@@ -86,7 +79,6 @@ export async function POST(request: NextRequest) {
     }
     await usersCollection.updateOne({ email }, updateDoc)
 
-    // Fetch updated user data
     const updatedUser = await usersCollection.findOne({ email })
 
     return NextResponse.json({

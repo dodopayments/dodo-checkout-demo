@@ -113,9 +113,15 @@ function GuestDashboardContent() {
           {/* Action Buttons */}
           <div className="flex flex-col gap-3 sm:flex-row">
             <Button asChild className="flex-1">
-              <Link href="/auth/signin">
-                Sign in to Dashboard
-              </Link>
+              {email ? (
+                <Link href="/dashboard">
+                  Go to Dashboard
+                </Link>
+              ) : (
+                <Link href="/auth/signin">
+                  Sign into Dashboard
+                </Link>
+              )}
             </Button>
             <Button asChild variant="secondary" className="flex-1">
               <Link href="/pricing">

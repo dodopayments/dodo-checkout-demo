@@ -297,7 +297,7 @@ export default function Pricing() {
     "monthly" | "annually"
   >("monthly");
   const [isLoading, setIsLoading] = React.useState<string | null>(null);
-  const [showSuccess] = React.useState(false);
+  const [showSuccess, setShowSuccess] = React.useState(false);
   const [showError, setShowError] = React.useState(false);
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
   const [useOverlayCheckout, setUseOverlayCheckout] = React.useState(false);
@@ -309,6 +309,11 @@ export default function Pricing() {
   const [pendingPlan, setPendingPlan] = React.useState<string | null>(null);
   const [pendingCheckoutCallback, setPendingCheckoutCallback] =
     React.useState<(() => Promise<void>) | null>(null);
+
+  const sessionRef = React.useRef(session);
+  React.useEffect(() => {
+    sessionRef.current = session;
+  }, [session]);
 
   // Load checkout mode from localStorage
   React.useEffect(() => {
@@ -344,9 +349,19 @@ export default function Pricing() {
             setIsLoading(null);
             break;
           case "checkout.redirect":
-            // Handle successful payment
+            // Handle successful payment — show popup then redirect
             if (event.data?.type === "success") {
-              router.push("/dashboard");
+              setShowSuccess(true);
+              setTimeout(() => {
+                setShowSuccess(false);
+              }, 5000);
+              setTimeout(() => {
+                if (sessionRef.current?.user?.email) {
+                  router.push("/dashboard");
+                } else {
+                  router.push("/guest-dashboard?status=succeeded");
+                }
+              }, 3000);
             } else if (event.data?.type === "failure") {
               setShowError(true);
               setTimeout(() => setShowError(false), 5000);
@@ -374,11 +389,55 @@ export default function Pricing() {
       setTimeout(() => setShowError(false), 5000);
     }
 
+    // Check for Dodo return params (redirect checkout returns with these)
+    const status = params.get("status");
+    const subscriptionId = params.get("subscription_id");
+    const paymentId = params.get("payment_id");
+    const returnEmail = params.get("email");
+
     const sessionId =
       typeof window !== "undefined"
         ? localStorage.getItem("pending_checkout_session_id")
         : null;
-    if (sessionId && session?.user?.email) {
+
+    const userEmail = session?.user?.email || returnEmail;
+
+    // Handle Dodo redirect return params for both guest and authenticated users
+    if (status && userEmail && (subscriptionId || paymentId || sessionId)) {
+      const body: Record<string, string> = { email: userEmail };
+      if (subscriptionId) body.subscriptionId = subscriptionId;
+      if (paymentId) body.paymentId = paymentId;
+      if (sessionId) body.sessionId = sessionId;
+
+      (async () => {
+        try {
+          const res = await fetch("/api/verify-payment", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          });
+          const data = await res.json();
+          if (res.ok && data?.success) {
+            localStorage.removeItem("pending_checkout_session_id");
+            if (session?.user?.email) {
+              router.push("/dashboard");
+            } else {
+              const guestParams = new URLSearchParams();
+              if (userEmail) guestParams.set("email", userEmail);
+              if (status) guestParams.set("status", status);
+              if (subscriptionId) guestParams.set("subscription_id", subscriptionId);
+              if (paymentId) guestParams.set("payment_id", paymentId);
+              router.push(`/guest-dashboard?${guestParams.toString()}`);
+            }
+          }
+        } catch {
+          // ignore
+        } finally {
+          localStorage.removeItem("pending_checkout_session_id");
+        }
+      })();
+    } else if (sessionId && session?.user?.email) {
+      // Fallback: verify using stored session ID for authenticated users
       (async () => {
         try {
           const res = await fetch("/api/verify-payment", {

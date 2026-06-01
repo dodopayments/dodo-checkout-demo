@@ -21,7 +21,7 @@
         "@types/mdx": "^2.0.13",
         "clsx": "^2.1.1",
         "cobe": "^0.6.5",
-        "dodopayments-checkout": "^1.9.1",
+        "dodopayments-checkout": "^1.9.2",
         "mongoose": "^8.0.0",
         "next": "15.1.11",
         "next-auth": "^5.0.0-beta.25",
@@ -523,7 +523,7 @@
 
     "doctrine": ["doctrine@3.0.0", "", { "dependencies": { "esutils": "^2.0.2" } }, "sha512-yS+Q5i3hBf7GBkd4KG8a7eBNNWNGLTaEwwYWUijIYM7zrlYDM0BFXHjjPWlWZ1Rg7UaddZeIDmi9jF3HmqiQ2w=="],
 
-    "dodopayments-checkout": ["dodopayments-checkout@1.9.1", "", { "dependencies": { "@iframe-resizer/parent": "^5.5.7" } }, "sha512-of9mIXRCTq5GpRmk0Vt2sCdFGdwPTa2wuOD4SXUyJVjn+bcWO3dES7h6IHBkiIntI+XC3GdLbPzR7U5SaYzSkA=="],
+    "dodopayments-checkout": ["dodopayments-checkout@1.9.2", "", { "dependencies": { "@iframe-resizer/parent": "^5.5.7" } }, "sha512-JeI/CCX2NwU0tP/Q7aPSW7agvZWUYjYkk6wM5uh9fAyFbGHdwhNgSXQtPRQNL/vbCcyCNPW5hXI0gSJ6CB2zpg=="],
 
     "dom-serializer": ["dom-serializer@2.0.0", "", { "dependencies": { "domelementtype": "^2.3.0", "domhandler": "^5.0.2", "entities": "^4.2.0" } }, "sha512-wIkAryiqt/nV5EQKqQpo3SToSOV9J0DnbJqwK7Wv/Trc92zIAYZ4FlMu+JPFW1DfGFt81ZTCGgDEabffXeLyJg=="],
 

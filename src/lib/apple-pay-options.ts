@@ -14,9 +14,20 @@ interface ApplePayRecurringOptions {
   intervalCount?: number;
 }
 
+interface ApplePayLineItem {
+  label: string;
+  /** Omit on a single row and the authorized total is used. Required from two
+   *  rows up, since only the merchant knows how the total splits. */
+  amount?: string;
+}
+
 export interface ApplePayCheckoutOptions {
   merchantName: string;
   applePayButtonType: "buy" | "subscribe";
+  /** Names the product on a one-time charge. Without it the sheet shows only
+   *  the merchant name and the price. A subscription names its product through
+   *  `applePayRecurring.label` instead, so never set both. */
+  applePayLineItems?: ApplePayLineItem[];
   applePayRecurring?: ApplePayRecurringOptions;
 }
 
@@ -28,6 +39,17 @@ const RECURRING_LABELS: Record<
 > = {
   subscription: "Unlimited Pro",
   "credit-based": "25 AI credits",
+};
+
+/** What the buyer is paying for on a one-time charge. Describes the goods
+ *  rather than repeating the plan name, so the sheet says something the price
+ *  alone does not. */
+const ONE_TIME_LABELS: Record<
+  Extract<ApplePayCheckoutKind, "prepaid-credits" | "special-download">,
+  string
+> = {
+  "prepaid-credits": "10 AI image credits",
+  "special-download": "12 premium artworks",
 };
 
 function getManagementUrl() {
@@ -57,9 +79,13 @@ export function getApplePayCheckoutOptions(
   const isRecurring = kind === "subscription" || kind === "credit-based";
 
   if (!isRecurring) {
+    // No amount: one row can only be the whole charge, so the SDK fills in the
+    // authorized total. Restating it here would duplicate a number the server
+    // already owns, and a one-cent difference would silently drop the row.
     return {
       merchantName: MERCHANT_NAME,
       applePayButtonType: "buy",
+      applePayLineItems: [{ label: ONE_TIME_LABELS[kind] }],
     };
   }
 

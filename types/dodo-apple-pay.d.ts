@@ -19,6 +19,17 @@ declare module "dodopayments-checkout" {
       | "contribute"
       | "tip";
 
+    /** Rows above the total, naming what the buyer is paying for on a one-time
+     *  charge. A subscription names its product through `applePayRecurring`
+     *  instead. Amounts must add up to the authorized total, or the whole list
+     *  is dropped. */
+    applePayLineItems?: Array<{
+      label: string;
+      /** Omit on a single row and the authorized total is used. Required from
+       *  two rows up. */
+      amount?: string;
+    }>;
+
     applePayRecurring?: {
       label: string;
       managementUrl: string;

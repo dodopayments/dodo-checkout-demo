@@ -22,6 +22,11 @@ import React, { Fragment } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { DodoPayments } from "dodopayments-checkout";
+import {
+  getApplePayCheckoutOptions,
+  type ApplePayBillingFrequency,
+  type ApplePayCheckoutKind,
+} from "@/lib/apple-pay-options";
 // Removed custom BillingAddressModal; unified Checkout Sessions will collect needed details
 
 type FixedPrice = string;
@@ -301,9 +306,9 @@ export default function Pricing() {
   const [showError, setShowError] = React.useState(false);
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
   const [useOverlayCheckout, setUseOverlayCheckout] = React.useState(false);
-  // Inline checkout state: when true, checkout is embedded in a dedicated page
+  // Inline checkout is required for Apple Pay branding (merchant name, button type, recurring)
   // When false, uses overlay (modal) or redirect checkout
-  const [useInlineCheckout, setUseInlineCheckout] = React.useState(false);
+  const [useInlineCheckout, setUseInlineCheckout] = React.useState(true);
   // Billing modal no longer used; checkout session collects details
   const [showAuthModal, setShowAuthModal] = React.useState(false);
   const [pendingPlan, setPendingPlan] = React.useState<string | null>(null);
@@ -334,9 +339,12 @@ export default function Pricing() {
   // No-op: checkout collects billing/customer if not provided
 
   // Initialize Dodo Payments SDK
+  // Apple Pay branding requires displayType: "inline" (overlay draws no Apple Pay button)
   React.useEffect(() => {
     DodoPayments.Initialize({
       mode: "test", // Change to 'live' for production
+      // Apple Pay branding only applies to inline checkout
+      displayType: useInlineCheckout ? "inline" : "overlay",
       onEvent: (event) => {
         switch (event.event_type) {
           case "checkout.opened":
@@ -376,7 +384,36 @@ export default function Pricing() {
         }
       },
     });
-  }, [router]);
+  }, [router, useInlineCheckout]);
+
+  function openCheckout(
+    checkoutUrl: string,
+    kind: ApplePayCheckoutKind,
+    frequency: ApplePayBillingFrequency = billingFrequency
+  ) {
+    const applePayOptions = getApplePayCheckoutOptions(kind, frequency);
+
+    if (useInlineCheckout) {
+      localStorage.setItem("pending_checkout_url", checkoutUrl);
+      const params = new URLSearchParams({
+        checkout_url: checkoutUrl,
+        apple_pay_kind: kind,
+        billing_frequency: frequency,
+      });
+      router.push(`/checkout?${params.toString()}`);
+      return;
+    }
+
+    if (useOverlayCheckout) {
+      DodoPayments.Checkout.open({
+        checkoutUrl,
+        options: applePayOptions,
+      });
+      return;
+    }
+
+    window.location.href = checkoutUrl;
+  }
 
   // After returning from hosted checkout, verify payment using stored session id
   React.useEffect(() => {
@@ -518,16 +555,7 @@ export default function Pricing() {
         if (data.session_id) {
           localStorage.setItem("pending_checkout_session_id", data.session_id);
         }
-        const url = data.checkout_url;
-
-        if (useInlineCheckout) {
-          localStorage.setItem("pending_checkout_url", url);
-          router.push(`/checkout?checkout_url=${encodeURIComponent(url)}`);
-        } else if (useOverlayCheckout) {
-          DodoPayments.Checkout.open({ checkoutUrl: url });
-        } else {
-          window.location.href = url;
-        }
+        openCheckout(data.checkout_url, "special-download");
       } else {
         const msg =
           data.message ||
@@ -617,23 +645,7 @@ export default function Pricing() {
         if (data.session_id) {
           localStorage.setItem("pending_checkout_session_id", data.session_id);
         }
-        const url = data.checkout_url;
-
-        // Handle checkout based on user preference: inline, overlay, or redirect
-        if (useInlineCheckout) {
-          // INLINE CHECKOUT: Store checkout URL and navigate to dedicated checkout page
-          // The checkout will be embedded inline on /checkout page
-          localStorage.setItem("pending_checkout_url", url);
-          router.push(`/checkout?checkout_url=${encodeURIComponent(url)}`);
-        } else if (useOverlayCheckout) {
-          // OVERLAY CHECKOUT: Open checkout in a modal overlay on current page
-          DodoPayments.Checkout.open({
-            checkoutUrl: url,
-          });
-        } else {
-          // REDIRECT CHECKOUT: Navigate away to hosted checkout page
-          window.location.href = url;
-        }
+        openCheckout(data.checkout_url, "subscription");
       } else {
         console.error("Checkout session (subscription) failed:", data);
         const msg =
@@ -700,16 +712,7 @@ export default function Pricing() {
         if (data.session_id) {
           localStorage.setItem("pending_checkout_session_id", data.session_id);
         }
-        const url = data.checkout_url;
-
-        if (useInlineCheckout) {
-          localStorage.setItem("pending_checkout_url", url);
-          router.push(`/checkout?checkout_url=${encodeURIComponent(url)}`);
-        } else if (useOverlayCheckout) {
-          DodoPayments.Checkout.open({ checkoutUrl: url });
-        } else {
-          window.location.href = url;
-        }
+        openCheckout(data.checkout_url, "prepaid-credits");
       } else {
         const msg = data.message || data.details?.message || data.error || "Failed to create checkout session";
         setErrorMessage(`Starter Credits Error: ${msg}`);
@@ -811,16 +814,7 @@ export default function Pricing() {
         if (data.session_id) {
           localStorage.setItem("pending_checkout_session_id", data.session_id);
         }
-        const url = data.checkout_url;
-
-        if (useInlineCheckout) {
-          localStorage.setItem("pending_checkout_url", url);
-          router.push(`/checkout?checkout_url=${encodeURIComponent(url)}`);
-        } else if (useOverlayCheckout) {
-          DodoPayments.Checkout.open({ checkoutUrl: url });
-        } else {
-          window.location.href = url;
-        }
+        openCheckout(data.checkout_url, "credit-based");
       } else {
         const msg =
           data.message ||

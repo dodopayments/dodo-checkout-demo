@@ -5,6 +5,11 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { DodoPayments, CheckoutBreakdownData } from "dodopayments-checkout";
 import DemoBottomPopup from "@/components/ui/DemoBottomPopup";
+import {
+  getApplePayCheckoutOptions,
+  parseApplePayBillingFrequency,
+  parseApplePayCheckoutKind,
+} from "@/lib/apple-pay-options";
 
 /**
  * Verify payment with the backend API
@@ -56,8 +61,14 @@ function CheckoutPageContent() {
   // Ref to store current session for use in SDK event callbacks
   const sessionRef = useRef(session);
 
-  // Get checkout URL from query params only
+  // Get checkout URL and Apple Pay branding context from query params
   const checkoutUrl = searchParams.get("checkout_url");
+  const applePayKind = parseApplePayCheckoutKind(
+    searchParams.get("apple_pay_kind")
+  );
+  const applePayBillingFrequency = parseApplePayBillingFrequency(
+    searchParams.get("billing_frequency")
+  );
 
   // Update session ref when session changes
   useEffect(() => {
@@ -163,13 +174,15 @@ function CheckoutPageContent() {
       return;
     }
 
-    // Skip if already initialized for this checkout URL
-    if (initializedRef.current === checkoutUrl) {
+    const initKey = `${checkoutUrl}|${applePayKind}|${applePayBillingFrequency}`;
+
+    // Skip if already initialized for this checkout URL and Apple Pay options
+    if (initializedRef.current === initKey) {
       return;
     }
 
-    // Mark as initialized for this checkout URL
-    initializedRef.current = checkoutUrl;
+    // Mark as initialized for this checkout URL and Apple Pay options
+    initializedRef.current = initKey;
 
     // Clear any existing timeout
     if (loadingTimeoutRef.current) {
@@ -314,6 +327,10 @@ function CheckoutPageContent() {
             DodoPayments.Checkout.open({
               checkoutUrl,
               elementId: "dodo-inline-checkout",
+              options: getApplePayCheckoutOptions(
+                applePayKind,
+                applePayBillingFrequency
+              ),
             });
           } catch (error) {
             if (process.env.NODE_ENV === "development") {
@@ -363,7 +380,7 @@ function CheckoutPageContent() {
         // Ignore cleanup errors
       }
     };
-  }, [checkoutUrl, router]);
+  }, [checkoutUrl, router, applePayKind, applePayBillingFrequency]);
 
   /**
    * Format currency amount from cents to readable format

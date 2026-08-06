@@ -21,7 +21,7 @@
         "@types/mdx": "^2.0.13",
         "clsx": "^2.1.1",
         "cobe": "^0.6.5",
-        "dodopayments-checkout": "^1.9.5",
+        "dodopayments-checkout": "^1.9.6",
         "mongoose": "^8.0.0",
         "next": "15.1.11",
         "next-auth": "^5.0.0-beta.25",
@@ -517,7 +517,7 @@
 
     "doctrine": ["doctrine@3.0.0", "", { "dependencies": { "esutils": "^2.0.2" } }, "sha512-yS+Q5i3hBf7GBkd4KG8a7eBNNWNGLTaEwwYWUijIYM7zrlYDM0BFXHjjPWlWZ1Rg7UaddZeIDmi9jF3HmqiQ2w=="],
 
-    "dodopayments-checkout": ["dodopayments-checkout@1.9.5", "", {}, "sha512-TRWdXdvwjzL5uNp8518v/1E3zvZf8P+Is5/QVRvHRxqSbIiCrxFqetEfromOaVRqNe7XLE23wWwxj0ccPCEBug=="],
+    "dodopayments-checkout": ["dodopayments-checkout@1.9.6", "", {}, "sha512-p44ZVQPkyzFBmBBZBpm6fETHq7aHGWNc7xSX7B5CbggZkOgmOjz7fE4GWdgcf7kwu4uY8ievHEdQXaSV5RHoPA=="],
 
     "dom-serializer": ["dom-serializer@2.0.0", "", { "dependencies": { "domelementtype": "^2.3.0", "domhandler": "^5.0.2", "entities": "^4.2.0" } }, "sha512-wIkAryiqt/nV5EQKqQpo3SToSOV9J0DnbJqwK7Wv/Trc92zIAYZ4FlMu+JPFW1DfGFt81ZTCGgDEabffXeLyJg=="],
 

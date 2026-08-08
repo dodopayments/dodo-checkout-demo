@@ -25,9 +25,11 @@ export async function POST(request: NextRequest) {
     }
     const { email, paymentId, subscriptionId, sessionId } = body || {}
 
-    if (!email) {
+    // The sessionId branch below discovers the customer's email from Dodo's own
+    // checkout session, so only require it upfront for paymentId/subscriptionId lookups.
+    if (!email && !sessionId) {
       return NextResponse.json(
-        { error: 'Email is required' },
+        { error: 'Email or sessionId is required' },
         { status: 400 }
       )
     }
@@ -43,8 +45,8 @@ export async function POST(request: NextRequest) {
     let paymentData = null
     let paymentType: 'one-time' | 'subscription' | 'usage-based' | 'prepaid-credits' = 'one-time'
 
-    // If payment ID provided, verify the payment
-    if (paymentId) {
+    // If payment ID provided, verify the payment (this branch needs email supplied)
+    if (paymentId && email) {
       const paymentResponse = await fetch(`https://test.dodopayments.com/payments/${paymentId}`, {
         method: 'GET',
         headers: {
@@ -78,8 +80,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // If subscription ID provided, verify the subscription
-    if (subscriptionId) {
+    // If subscription ID provided, verify the subscription (this branch needs email supplied)
+    if (subscriptionId && email) {
       const subscriptionResponse = await fetch(`https://test.dodopayments.com/subscriptions/${subscriptionId}`, {
         method: 'GET',
         headers: {

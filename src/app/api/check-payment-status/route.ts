@@ -17,7 +17,6 @@ export async function POST(request: NextRequest) {
     const db = client.db()
     const usersCollection = db.collection('users')
 
-    // Find user by email
     const user = await usersCollection.findOne({ email })
 
     if (!user) {
@@ -59,6 +58,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       hasPaid,
+      email: user.email,
       paymentType: derivedPaymentType,
       paymentMetadata: metadata,
       subscriptionStatus: user.subscriptionStatus,

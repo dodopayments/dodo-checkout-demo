@@ -5,7 +5,9 @@ import clientPromise from '@/lib/mongo'
 export async function GET(request: NextRequest) {
   try {
     const session = await auth()
-    if (!session?.user?.email) {
+    // Mobile has no cookie session — fall back to the signed-in identity's email.
+    const mobileEmail = request.nextUrl.searchParams.get('email')
+    if (!session?.user?.email && !mobileEmail) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -23,7 +25,9 @@ export async function GET(request: NextRequest) {
 
     const client = await clientPromise
     const db = client.db()
-    const user = await db.collection('users').findOne({ email: session.user.email })
+    const user = await db.collection('users').findOne(
+      { email: session?.user?.email ?? mobileEmail }
+    )
 
     if (!user?.dodoCustomerId) {
       return NextResponse.json({ balance: 0, subscribed: false })
